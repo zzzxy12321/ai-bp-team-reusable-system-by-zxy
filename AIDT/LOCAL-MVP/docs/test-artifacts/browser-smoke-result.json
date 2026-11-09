@@ -1,0 +1,94 @@
+{
+  "loading": {
+    "hidden": true,
+    "text": "A\n正在装配 AIDT 本地验证环境\n读取对象、流程、待办和审计数据…",
+    "banner": "DEMO ONLY\n当前数据、连接器和数字员工运行结果均为本地模拟。没有连接真实U9、ERP、DCS，也没有向外部发送任何消息。"
+  },
+  "layout": {
+    "innerWidth": 1440,
+    "docScrollWidth": 1440,
+    "mainClientWidth": 1183,
+    "mainScrollWidth": 1183,
+    "activeView": "dashboard",
+    "kpis": 6,
+    "taskCards": 4,
+    "objectDefinitions": 6,
+    "objectRecords": 4
+  },
+  "navigation": {
+    "total": 7,
+    "failures": []
+  },
+  "taskModal": {
+    "triggerFound": true,
+    "open": true,
+    "actionButtons": [
+      "退回上一节点",
+      "终止流程",
+      "通过 / 完成"
+    ],
+    "hasEvidenceLink": true,
+    "objectStatusShown": true
+  },
+  "launchModal": {
+    "open": true,
+    "workflowOptions": 4,
+    "dynamicFields": 5
+  },
+  "objectDetail": {
+    "triggerFound": true,
+    "open": true,
+    "hasFields": true,
+    "hasLinkedInstances": true,
+    "hasAudit": true,
+    "mockBoundaryShown": true
+  },
+  "instanceDetail": {
+    "triggerFound": true,
+    "open": true,
+    "timelineItems": 6,
+    "hasObjectFields": true,
+    "hasAudit": true,
+    "hasAgentEvidence": true
+  },
+  "taskAdvance": {
+    "taskId": "task-inst-batch-001",
+    "instanceId": "inst-batch-001",
+    "taskActionRecorded": true,
+    "taskCount": 2,
+    "pendingTaskCount": 1,
+    "auditGrowth": 3,
+    "currentStepAdvanced": true
+  },
+  "agentRun": {
+    "open": true,
+    "hasResult": true,
+    "hasPermissions": true,
+    "hasConfirmButton": true,
+    "modalClosedAfterConfirm": true,
+    "runStatus": "confirmed",
+    "confirmedBy": "系统管理员",
+    "hasConfirmationAudit": true
+  },
+  "mobile": {
+    "initial": {
+      "innerWidth": 390,
+      "docScrollWidth": 390,
+      "mainClientWidth": 390,
+      "mainScrollWidth": 390,
+      "sidebarCollapsed": true,
+      "kpiColumns": "176px 176px"
+    },
+    "open": {
+      "sidebarCollapsed": false,
+      "scrimVisible": true
+    },
+    "closed": true,
+    "modalWidth": 350,
+    "finalWidth": 390
+  },
+  "exceptions": [],
+  "consoleErrors": [],
+  "status": "PASS",
+  "generatedAt": "2026-10-29T16:37:58.880Z"
+}

@@ -1,0 +1,141 @@
+{
+  "generatedAt": "2026-10-29T16:37:44.868Z",
+  "status": "PASS",
+  "baseline": {
+    "objects": 4,
+    "objectTypes": 6,
+    "workflows": 4,
+    "activeInstances": 4,
+    "pendingTasks": 4,
+    "overdueTasks": 1,
+    "agents": 4,
+    "connectors": 4,
+    "auditEvents": 9
+  },
+  "final": {
+    "objects": 10,
+    "objectTypes": 6,
+    "workflows": 4,
+    "activeInstances": 6,
+    "pendingTasks": 6,
+    "overdueTasks": 1,
+    "agents": 4,
+    "connectors": 4,
+    "auditEvents": 92
+  },
+  "validations": {
+    "missingRequired": "REQUIRED_FIELD",
+    "unknownFields": "UNKNOWN_FIELDS",
+    "invalidNumberType": "INVALID_FIELD_TYPE",
+    "invalidCalendarDate": "INVALID_FIELD_TYPE"
+  },
+  "objectFirst": {
+    "instanceId": "inst-f0c1eb13-291a-4c5e-9c33-369732348086",
+    "objectId": "obj-record-5c5e140d-9750-4195-aa9b-dfc651fe996e",
+    "objectStatus": "已转产",
+    "objectVersion": 7,
+    "fieldSource": "business_objects.fields_json",
+    "linkedInstances": [
+      "inst-f0c1eb13-291a-4c5e-9c33-369732348086"
+    ]
+  },
+  "idempotency": {
+    "firstStatus": 201,
+    "replayStatus": 200,
+    "sameInstance": true,
+    "conflictStatus": 409
+  },
+  "completedChains": [
+    {
+      "name": "客户样品到研发转产",
+      "instanceId": "inst-f0c1eb13-291a-4c5e-9c33-369732348086",
+      "steps": [
+        "销售登记样品需求",
+        "研发立项评审",
+        "实验执行与结果登记",
+        "质量测试判定",
+        "试产联合评审",
+        "研发总监批准转产"
+      ]
+    },
+    {
+      "name": "低金额采购到付款",
+      "instanceId": "inst-64f61050-f905-487c-be5a-4d089a49ae64",
+      "steps": [
+        "需求部门提交请购",
+        "财务预算审核",
+        "采购询价与下单",
+        "到货与检验确认",
+        "订单验收发票三单匹配",
+        "付款审批"
+      ]
+    },
+    {
+      "name": "高金额采购到付款",
+      "instanceId": "inst-07de91ef-b4ca-42b7-9847-5583817350b4",
+      "steps": [
+        "需求部门提交请购",
+        "财务预算审核",
+        "采购询价与下单",
+        "到货与检验确认",
+        "订单验收发票三单匹配",
+        "付款审批",
+        "重大采购总经理审批"
+      ]
+    }
+  ],
+  "conditions": {
+    "lowAmountTriggered": false,
+    "lowAmountSkipped": [
+      "重大采购总经理审批"
+    ],
+    "highAmountTriggered": true
+  },
+  "returnAndReject": {
+    "instanceId": "inst-0c9ca26a-0b34-4f3b-b77b-183a5301e923",
+    "returnTarget": "客诉受理与分级",
+    "finalInstanceStatus": "rejected",
+    "finalObjectStatus": "已终止",
+    "auditActions": [
+      "object.created",
+      "instance.created",
+      "task.approve",
+      "object.status_changed",
+      "instance.advanced",
+      "task.return",
+      "object.status_changed",
+      "instance.returned",
+      "task.reject",
+      "object.status_changed",
+      "instance.rejected"
+    ]
+  },
+  "concurrency": [
+    {
+      "status": 409,
+      "code": "TASK_ALREADY_PROCESSED"
+    },
+    {
+      "status": 200,
+      "code": null
+    }
+  ],
+  "agent": {
+    "runId": "run-cb1b1fcd-5472-4f3a-bf60-8161c16390d7",
+    "level": "A2",
+    "requiresApproval": true,
+    "runStatus": "pending_confirmation",
+    "confirmedBy": "赵质量",
+    "blockedActions": [
+      "控制DCS/PLC",
+      "质量放行",
+      "关闭偏差"
+    ],
+    "crossScopeStatus": 403,
+    "disclaimer": "本结果为本地规则化演示，不调用真实大模型，不代表生产决策。"
+  },
+  "auditGrowth": {
+    "before": 9,
+    "after": 92
+  }
+}

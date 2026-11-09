@@ -1,0 +1,7 @@
+data/*.db
+data/*.db-*
+.aidt.pid
+.edge-*
+*.png
+*.log
+npm-debug.log*

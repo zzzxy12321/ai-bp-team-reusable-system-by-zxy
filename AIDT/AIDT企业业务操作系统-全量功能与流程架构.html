@@ -1,0 +1,2023 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AIDT 企业业务操作系统 · 全量功能与流程架构 · 离线导航版</title>
+<style>
+:root{
+  --bg:#eef2f7; --panel:#ffffff; --panel-2:#f8fafc; --text:#182230; --muted:#64748b;
+  --border:#dde4ec; --accent:#1f5a96; --accent-2:#0f8ba5; --navy:#17385f;
+  --orange:#e98514; --green:#138a63; --purple:#7653b8; --red:#c74242;
+  --hover:#f1f5f9; --code-bg:#f4f7fa; --mark:#ffe58a;
+  --sidebar-w:354px; --topbar-h:58px;
+  --shadow:0 12px 35px rgba(23,56,95,.09);
+}
+body.dark{
+  --bg:#10151c; --panel:#181f28; --panel-2:#141a22; --text:#e7edf5; --muted:#95a3b5;
+  --border:#2b3644; --accent:#6ca9e8; --accent-2:#5bc6d9; --navy:#8ebbe8;
+  --orange:#f0a03f; --green:#4bc39a; --purple:#b39ae0; --red:#f27777;
+  --hover:#222c38; --code-bg:#222b36; --mark:#796000;
+  --shadow:0 12px 35px rgba(0,0,0,.28);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",system-ui,-apple-system,sans-serif;
+  background:var(--bg);color:var(--text);font-size:15px;line-height:1.72;overflow:hidden;
+}
+button,input,select{font:inherit}
+button{cursor:pointer}
+
+/* 顶栏 */
+.topbar{
+  position:fixed;inset:0 0 auto 0;height:var(--topbar-h);z-index:80;display:flex;align-items:center;gap:10px;
+  padding:0 14px;background:color-mix(in srgb,var(--panel) 94%,transparent);
+  border-bottom:1px solid var(--border);backdrop-filter:blur(14px);
+}
+.icon-btn{
+  width:35px;height:35px;flex:none;border:1px solid var(--border);border-radius:9px;
+  background:var(--panel);color:var(--text);transition:.18s;
+}
+.icon-btn:hover{background:var(--hover);border-color:var(--accent);color:var(--accent)}
+.brand{display:flex;flex-direction:column;line-height:1.25;flex:none;min-width:210px}
+.brand-title{font-size:16px;font-weight:800;color:var(--navy);letter-spacing:.2px}
+.brand-sub{font-size:11px;color:var(--muted);margin-top:2px}
+.filter-wrap{display:flex;align-items:center;gap:6px;flex:none}
+.filter-label{font-size:12px;color:var(--muted);white-space:nowrap}
+.cat-select{
+  appearance:none;max-width:210px;padding:7px 30px 7px 12px;border:1px solid var(--border);
+  border-radius:9px;background:var(--panel-2);color:var(--text);font-size:13px;outline:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2364748b' d='M2 4l4 4 4-4z'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 10px center;
+}
+.cat-select:focus{border-color:var(--accent)}
+.search-wrap{position:relative;flex:1;max-width:480px;min-width:0;margin-left:auto}
+#searchInput{
+  width:100%;padding:8px 14px;border:1px solid var(--border);border-radius:9px;
+  background:var(--panel-2);color:var(--text);font-size:14px;outline:none;transition:.18s;
+}
+#searchInput:focus{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 13%,transparent)}
+.search-results{
+  position:absolute;top:44px;left:0;right:0;z-index:90;max-height:69vh;overflow:auto;
+  background:var(--panel);border:1px solid var(--border);border-radius:12px;box-shadow:var(--shadow);
+}
+.search-results.hidden{display:none}
+.sr-item{padding:9px 13px;border-bottom:1px solid var(--border);cursor:pointer}
+.sr-item:last-child{border-bottom:0}
+.sr-item:hover{background:var(--hover)}
+.sr-ch{font-size:10.5px;color:var(--accent);font-weight:700}
+.sr-title{font-size:13.5px;font-weight:700;margin:1px 0}
+.sr-snip{font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sr-empty{padding:14px;color:var(--muted);font-size:13px}
+.top-actions{display:flex;align-items:center;gap:7px;flex:none}
+.ver-chip{
+  font-size:11px;color:var(--accent);border:1px solid color-mix(in srgb,var(--accent) 42%,var(--border));
+  background:color-mix(in srgb,var(--accent) 7%,var(--panel));padding:4px 10px;border-radius:20px;white-space:nowrap;
+}
+
+/* 布局 */
+.layout{position:fixed;inset:var(--topbar-h) 0 0 0;display:flex}
+.sidebar{
+  width:var(--sidebar-w);flex:none;display:flex;flex-direction:column;background:var(--panel);
+  border-right:1px solid var(--border);transition:margin-left .22s ease;z-index:45;
+}
+body.side-collapsed .sidebar{margin-left:calc(-1 * var(--sidebar-w))}
+.sidebar-head{
+  display:flex;align-items:center;gap:7px;padding:10px 12px;border-bottom:1px solid var(--border);
+  flex:none;flex-wrap:wrap;
+}
+.tree-home{
+  border:0;background:linear-gradient(135deg,var(--navy),var(--accent));color:#fff;
+  padding:7px 15px;border-radius:8px;font-size:13px;font-weight:700;box-shadow:0 5px 16px rgba(23,56,95,.2)
+}
+.link-btn{border:0;background:none;color:var(--muted);font-size:12px;padding:4px 6px;border-radius:6px}
+.link-btn:hover{color:var(--accent);background:var(--hover)}
+.legend{display:flex;gap:10px;flex-wrap:wrap;padding:7px 13px;border-bottom:1px solid var(--border);flex:none}
+.legend-item{font-size:10.5px;color:var(--muted);display:flex;align-items:center;gap:5px}
+.legend-dot{width:8px;height:8px;border-radius:50%}
+.tree{flex:1;overflow-y:auto;padding:10px 7px 30px;scrollbar-width:thin}
+.tree-group{margin-bottom:7px}
+.tree-layer{
+  display:flex;align-items:center;gap:8px;padding:9px 10px;border-radius:9px;
+  font-weight:800;font-size:13.5px;cursor:pointer;user-select:none;
+}
+.tree-layer:hover{background:var(--hover)}
+.tree-layer-dot{width:10px;height:10px;border-radius:3px;background:var(--lc);flex:none}
+.tree-layer-name{flex:1}
+.tree-layer-count{font-size:10.5px;font-weight:400;color:var(--muted)}
+.tw{color:var(--muted);font-size:10px}
+.tree-chapters{list-style:none;margin:3px 0 4px 14px;border-left:1px solid var(--border)}
+.tree-chapter{margin:2px 0}
+.tree-ch{
+  display:flex;align-items:center;gap:6px;padding:7px 8px;border-radius:8px;
+  font-size:13px;cursor:pointer;user-select:none;
+}
+.tree-ch:hover{background:var(--hover)}
+.tree-ch.active{background:color-mix(in srgb,var(--lc) 12%,transparent);font-weight:700}
+.tree-ch-num{
+  font-size:10px;font-weight:800;color:#fff;background:var(--lc);
+  border-radius:5px;padding:0 5px;line-height:18px;flex:none;
+}
+.tree-ch-t{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tree-sections{list-style:none;display:none;padding:2px 6px 5px 18px}
+.tree-chapter.open .tree-sections{display:block}
+.tree-sub{
+  padding:4px 7px;font-size:11.5px;color:var(--muted);cursor:pointer;border-radius:6px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.tree-sub:hover{background:var(--hover);color:var(--text)}
+.tree-sub.active{color:var(--lc);font-weight:700;background:color-mix(in srgb,var(--lc) 8%,transparent)}
+.tree-group.collapsed .tree-chapters{display:none}
+.sidebar-note{
+  flex:none;padding:10px 13px 13px;border-top:1px solid var(--border);
+  font-size:10.5px;color:var(--muted);line-height:1.65;
+}
+
+/* 正文 */
+.main{flex:1;min-width:0;overflow-y:auto;overflow-x:hidden;padding:26px 30px 90px;scroll-behavior:smooth;background:var(--bg)}
+.view{display:none;max-width:1060px;margin:0 auto}
+.view.active{display:block}
+.chapter-head{
+  position:relative;overflow:hidden;background:var(--panel);border:1px solid var(--border);
+  border-radius:16px;padding:24px 28px;margin-bottom:16px;box-shadow:var(--shadow);
+}
+.chapter-head::before{
+  content:"";position:absolute;inset:0 auto 0 0;width:5px;background:var(--cc);
+}
+.chapter-head::after{
+  content:"";position:absolute;width:220px;height:220px;border-radius:50%;right:-85px;top:-118px;
+  background:radial-gradient(circle,color-mix(in srgb,var(--cc) 16%,transparent),transparent 68%);
+}
+.chapter-badge{
+  display:inline-block;font-size:10.5px;font-weight:800;padding:3px 10px;border-radius:15px;
+  margin-bottom:8px;color:var(--cc);background:color-mix(in srgb,var(--cc) 10%,var(--panel));
+  border:1px solid color-mix(in srgb,var(--cc) 25%,var(--border));
+}
+.chapter-title{font-size:24px;font-weight:850;letter-spacing:.3px}
+.chapter-num{color:var(--cc);margin-right:5px}
+.chapter-sub{font-size:12.5px;color:var(--muted);margin-top:5px}
+.chapter-body{
+  background:var(--panel);border:1px solid var(--border);border-radius:16px;
+  padding:27px 31px;box-shadow:var(--shadow);
+}
+.md-h1{font-size:20px;margin:2px 0 15px;padding-bottom:9px;border-bottom:2px solid var(--border)}
+.md-h2{font-size:18px;margin:29px 0 12px;padding-left:11px;border-left:4px solid var(--cc)}
+.md-h3{font-size:15.5px;margin:21px 0 8px;color:var(--text)}
+.md-h4{font-size:14px;margin:15px 0 6px}
+.chapter-body p{margin:9px 0}
+.chapter-body ul,.chapter-body ol{margin:8px 0 13px;padding-left:24px}
+.chapter-body li{margin:4px 0}
+.chapter-body blockquote{
+  margin:13px 0;padding:12px 16px;background:var(--panel-2);
+  border-left:4px solid var(--cc);border-radius:0 9px 9px 0;font-size:13.5px;
+}
+.chapter-body blockquote p{display:inline}
+.chapter-body a{color:var(--accent)}
+.chapter-body code{
+  background:var(--code-bg);padding:1px 6px;border-radius:5px;
+  font-family:Consolas,"Courier New",monospace;font-size:12.5px;
+}
+.chapter-body pre{
+  background:var(--code-bg);border:1px solid var(--border);border-radius:10px;
+  padding:14px 16px;overflow:auto;margin:12px 0;line-height:1.6;
+}
+.chapter-body pre code{background:none;padding:0;white-space:pre}
+.table-wrap{overflow-x:auto;margin:12px 0;border:1px solid var(--border);border-radius:11px}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:620px}
+th{
+  text-align:left;padding:9px 11px;background:color-mix(in srgb,var(--cc) 8%,var(--panel));
+  border-bottom:2px solid var(--border);white-space:nowrap;font-weight:800;
+}
+td{padding:8px 11px;border-bottom:1px solid var(--border);vertical-align:top}
+tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:var(--hover)}
+mark.hl{background:var(--mark);border-radius:2px;padding:0 1px}
+mark.hl.search-flash{animation:flash 1.5s ease}
+@keyframes flash{0%,52%{outline:3px solid var(--accent);outline-offset:1px}100%{outline:none}}
+
+/* 总览 */
+.home-hero{
+  position:relative;overflow:hidden;text-align:center;padding:42px 26px 28px;
+  background:
+    radial-gradient(circle at 16% 16%,rgba(31,90,150,.12),transparent 32%),
+    radial-gradient(circle at 84% 28%,rgba(15,139,165,.11),transparent 30%),
+    var(--panel);
+  border:1px solid var(--border);border-radius:19px;box-shadow:var(--shadow);
+}
+.home-hero::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);
+  background-size:34px 34px;opacity:.22;mask-image:linear-gradient(to bottom,#000,transparent 74%);
+}
+.home-kicker{position:relative;font-size:11px;letter-spacing:2px;color:var(--accent);font-weight:800}
+.home-hero h1{position:relative;font-size:31px;line-height:1.3;margin:8px 0 7px;letter-spacing:.8px}
+.home-hero h1 span{color:var(--accent)}
+.home-sub{position:relative;color:var(--muted);font-size:13.5px}
+.home-ver{
+  position:relative;display:inline-block;margin-top:13px;font-size:11px;color:var(--accent);
+  border:1px solid color-mix(in srgb,var(--accent) 40%,var(--border));border-radius:20px;padding:4px 14px;
+  background:color-mix(in srgb,var(--accent) 7%,var(--panel));
+}
+.hero-metrics{
+  position:relative;max-width:900px;margin:22px auto 0;display:grid;
+  grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;
+}
+.metric-card{
+  background:color-mix(in srgb,var(--panel) 88%,transparent);border:1px solid var(--border);
+  border-radius:12px;padding:12px 8px;
+}
+.metric-num{font-size:22px;font-weight:850;color:var(--accent);line-height:1.2}
+.metric-label{font-size:10.5px;color:var(--muted);margin-top:2px}
+.home-note{
+  max-width:920px;margin:16px auto 0;background:color-mix(in srgb,var(--accent) 6%,var(--panel));
+  border:1px solid color-mix(in srgb,var(--accent) 20%,var(--border));border-radius:11px;
+  padding:11px 16px;font-size:12.5px;color:var(--muted);text-align:left;
+}
+.home-h2{
+  max-width:920px;margin:30px auto 13px;padding-left:12px;border-left:4px solid var(--accent);
+  font-size:19px;
+}
+.suite-grid{max-width:920px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:12px}
+.suite-card{
+  position:relative;background:var(--panel);border:1px solid var(--border);border-radius:14px;
+  padding:16px 17px;cursor:pointer;transition:.18s;overflow:hidden;box-shadow:0 4px 16px rgba(20,50,80,.04)
+}
+.suite-card:hover{transform:translateY(-2px);border-color:var(--accent);box-shadow:var(--shadow)}
+.suite-card::after{content:"";position:absolute;width:80px;height:80px;border-radius:50%;right:-35px;bottom:-45px;background:color-mix(in srgb,var(--sc) 15%,transparent)}
+.suite-icon{font-size:22px}
+.suite-card b{display:block;margin-top:5px;font-size:15px}
+.suite-card span{display:block;font-size:11.5px;color:var(--muted);margin-top:3px}
+.suite-tag{font-size:9.5px;color:var(--sc);border:1px solid color-mix(in srgb,var(--sc) 40%,var(--border));border-radius:10px;padding:1px 7px;display:inline-block;margin-top:8px}
+.layer-stack{max-width:920px;margin:0 auto;display:flex;flex-direction:column;gap:7px}
+.layer-row{
+  display:grid;grid-template-columns:140px 1fr;background:var(--panel);border:1px solid var(--border);
+  border-radius:10px;overflow:hidden;
+}
+.layer-key{
+  display:flex;align-items:center;justify-content:center;padding:10px;font-weight:800;font-size:12.5px;
+  color:#fff;background:var(--lc);text-align:center;
+}
+.layer-val{display:flex;align-items:center;flex-wrap:wrap;gap:6px;padding:9px 12px}
+.chip{
+  display:inline-flex;align-items:center;gap:4px;font-size:11.5px;padding:3px 8px;
+  border:1px solid var(--border);background:var(--panel-2);border-radius:8px;color:var(--text);white-space:nowrap;
+}
+.home-cores{max-width:920px;margin:0 auto;display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:11px}
+.home-core{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+.home-core b{font-size:13.5px;color:var(--accent)}
+.home-core p{font-size:12px;color:var(--muted);margin-top:3px}
+.home-usage{
+  max-width:920px;margin:18px auto 0;background:var(--panel);border:1px solid var(--border);
+  border-radius:12px;padding:15px 18px 15px 38px;font-size:12.5px;color:var(--muted);
+}
+
+/* 摘要页 */
+.summaryView.hidden{display:none}
+.summary-intro{
+  display:flex;align-items:center;gap:14px;background:var(--panel);border:1px solid var(--border);
+  border-radius:14px;padding:17px 21px;margin-bottom:14px;border-top:4px solid var(--accent);box-shadow:var(--shadow);
+}
+.summary-ic{font-size:27px}
+.summary-txt b{font-size:17px;display:block}
+.summary-txt span{font-size:12px;color:var(--muted)}
+.btn-back{
+  margin-left:auto;border:1px solid var(--border);background:var(--panel-2);color:var(--text);
+  padding:7px 13px;border-radius:8px;font-size:12px;white-space:nowrap;
+}
+.btn-back:hover{border-color:var(--accent);color:var(--accent)}
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:11px}
+.summary-card{
+  background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 16px;
+  cursor:pointer;transition:.16s;
+}
+.summary-card:hover{border-color:var(--accent);transform:translateY(-1px)}
+.summary-card b{display:block;font-size:14px;margin:5px 0 3px}
+.summary-card p{font-size:11.5px;color:var(--muted)}
+.summary-card .mini{font-size:10px;color:var(--accent);font-weight:700}
+
+/* 特殊组件 */
+.callout{
+  margin:14px 0;padding:14px 17px;border:1px solid var(--border);border-left:5px solid var(--accent);
+  border-radius:10px;background:var(--panel-2);
+}
+.callout.warn{border-left-color:var(--orange);background:color-mix(in srgb,var(--orange) 6%,var(--panel))}
+.callout.risk{border-left-color:var(--red);background:color-mix(in srgb,var(--red) 6%,var(--panel))}
+.callout.ok{border-left-color:var(--green);background:color-mix(in srgb,var(--green) 6%,var(--panel))}
+.callout-title{font-weight:800;margin-bottom:4px;font-size:13.5px}
+.two-col{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px;margin:12px 0}
+.three-col{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:11px;margin:12px 0}
+.info-card{
+  background:var(--panel-2);border:1px solid var(--border);border-radius:11px;padding:13px 14px;
+}
+.info-card h4{font-size:13.5px;margin-bottom:5px}
+.info-card p,.info-card li{font-size:12px;color:var(--muted)}
+.info-card ul{padding-left:18px;margin:5px 0 0}
+.number-list{counter-reset:n;list-style:none;padding-left:0!important}
+.number-list li{
+  counter-increment:n;position:relative;padding:9px 10px 9px 40px;margin:7px 0!important;
+  background:var(--panel-2);border:1px solid var(--border);border-radius:9px;font-size:13px;
+}
+.number-list li::before{
+  content:counter(n,decimal-leading-zero);position:absolute;left:10px;top:10px;
+  width:22px;height:22px;border-radius:6px;background:var(--cc);color:#fff;
+  display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;
+}
+.badge{display:inline-block;padding:1px 7px;border-radius:8px;font-size:10.5px;font-weight:700;white-space:nowrap}
+.badge.blue{color:var(--accent);background:color-mix(in srgb,var(--accent) 11%,var(--panel))}
+.badge.green{color:var(--green);background:color-mix(in srgb,var(--green) 11%,var(--panel))}
+.badge.orange{color:var(--orange);background:color-mix(in srgb,var(--orange) 11%,var(--panel))}
+.badge.red{color:var(--red);background:color-mix(in srgb,var(--red) 11%,var(--panel))}
+.badge.purple{color:var(--purple);background:color-mix(in srgb,var(--purple) 11%,var(--panel))}
+.rule-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;margin:12px 0}
+.rule-card{background:var(--panel);border:1px solid var(--border);border-radius:11px;padding:13px}
+.rule-card b{display:block;font-size:13px;margin-bottom:4px}
+.rule-card span{font-size:11.5px;color:var(--muted)}
+.matrix-note{font-size:11.5px;color:var(--muted);margin-top:-5px}
+.status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:1px}
+.authority-r{color:var(--blue,#1f5a96);font-weight:700}
+.authority-w{color:var(--red);font-weight:700}
+.architecture{
+  margin:14px 0;padding:16px;background:var(--panel-2);border:1px solid var(--border);border-radius:14px;
+}
+.arch-layer{
+  display:grid;grid-template-columns:125px 1fr;gap:10px;align-items:stretch;margin:6px 0;
+}
+.arch-key{
+  display:flex;align-items:center;justify-content:center;text-align:center;border-radius:9px;
+  color:#fff;background:var(--lc);font-size:12px;font-weight:800;padding:9px;
+}
+.arch-box{
+  display:flex;align-items:center;flex-wrap:wrap;gap:7px;padding:9px 11px;border:1px solid var(--border);
+  background:var(--panel);border-radius:9px;
+}
+.arch-box span{font-size:11px;padding:3px 7px;border-radius:7px;background:var(--panel-2);border:1px solid var(--border)}
+.flow-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0 10px}
+.flow-tab{
+  border:1px solid var(--border);background:var(--panel-2);color:var(--muted);
+  padding:6px 11px;border-radius:8px;font-size:12px;transition:.15s;
+}
+.flow-tab.active{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700}
+.flow-panel{display:none}
+.flow-panel.active{display:block;animation:fade .2s ease}
+@keyframes fade{from{opacity:.35;transform:translateY(3px)}to{opacity:1;transform:none}}
+.flow-strip{display:flex;align-items:stretch;gap:7px;overflow-x:auto;padding:12px 3px 16px}
+.flow-node{
+  min-width:135px;flex:1;background:var(--panel-2);border:1px solid var(--border);
+  border-top:4px solid var(--fc,var(--accent));border-radius:10px;padding:11px 12px;
+}
+.flow-node small{display:block;font-size:9.5px;color:var(--muted);margin-bottom:2px}
+.flow-node b{display:block;font-size:12px;line-height:1.45}
+.flow-node span{display:block;font-size:10.5px;color:var(--muted);margin-top:3px}
+.flow-arrow{display:flex;align-items:center;color:var(--accent);font-size:18px;flex:none;font-weight:800}
+.integration-map{
+  display:grid;grid-template-columns:1fr 1.1fr 1fr;gap:12px;align-items:center;
+  margin:15px 0;padding:16px;background:var(--panel-2);border:1px solid var(--border);border-radius:14px;
+}
+.system-stack{display:flex;flex-direction:column;gap:7px}
+.system-node{
+  background:var(--panel);border:1px solid var(--border);border-radius:9px;padding:8px 10px;
+  font-size:11.5px;text-align:center;
+}
+.integration-core{
+  text-align:center;padding:20px 12px;border-radius:14px;color:#fff;
+  background:linear-gradient(145deg,var(--navy),var(--accent));
+  box-shadow:0 12px 26px rgba(23,56,95,.22);
+}
+.integration-core b{display:block;font-size:16px}
+.integration-core span{display:block;font-size:10.5px;opacity:.86;margin-top:4px}
+.integration-links{font-size:20px;color:var(--accent);text-align:center;margin-bottom:5px}
+.formula{
+  display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:12px 0;padding:13px;
+  background:var(--code-bg);border:1px solid var(--border);border-radius:10px;font-size:12.5px;
+}
+.formula code{background:var(--panel);border:1px solid var(--border);padding:2px 7px;border-radius:6px}
+.fde-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+.fde-card{background:var(--panel-2);border:1px solid var(--border);border-radius:10px;padding:12px}
+.fde-card b{display:block;font-size:12.5px;margin-bottom:3px}
+.fde-card span{font-size:11px;color:var(--muted)}
+.roadmap{position:relative;margin:14px 0 5px;padding-left:24px}
+.roadmap::before{content:"";position:absolute;left:7px;top:7px;bottom:7px;width:2px;background:var(--border)}
+.road-step{position:relative;margin:0 0 12px;padding:12px 14px;background:var(--panel-2);border:1px solid var(--border);border-radius:10px}
+.road-step::before{content:"";position:absolute;left:-23px;top:17px;width:12px;height:12px;border-radius:50%;background:var(--accent);border:3px solid var(--panel)}
+.road-step b{display:block;font-size:13px}
+.road-step span{font-size:11.5px;color:var(--muted)}
+.confidential{
+  margin-top:18px;padding:11px 14px;border:1px solid color-mix(in srgb,var(--orange) 36%,var(--border));
+  background:color-mix(in srgb,var(--orange) 7%,var(--panel));border-radius:9px;
+  color:var(--muted);font-size:11.5px;
+}
+.print-footer{display:none}
+
+/* 返回与辅助 */
+.back-top{
+  position:fixed;right:22px;bottom:22px;z-index:55;width:42px;height:42px;border-radius:50%;
+  border:1px solid var(--border);background:var(--panel);color:var(--accent);box-shadow:var(--shadow);
+  display:none;align-items:center;justify-content:center;font-size:18px;
+}
+.back-top.show{display:flex}
+.sidebar-scrim{display:none}
+
+@media (max-width:1180px){
+  .brand{min-width:0;overflow:hidden}
+  .brand-sub{display:none}
+  .filter-wrap{display:none}
+  .ver-chip{display:none}
+}
+@media (max-width:900px){
+  .topbar{padding:0 9px}
+  .brand{flex:0 1 auto;min-width:0}
+  .brand-title{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
+  .sidebar{position:fixed;left:0;top:var(--topbar-h);bottom:0;box-shadow:12px 0 32px rgba(0,0,0,.18)}
+  body:not(.side-collapsed) .sidebar-scrim{
+    display:block;position:fixed;inset:var(--topbar-h) 0 0 0;background:rgba(15,23,42,.28);z-index:40;
+  }
+  .main{padding:16px 12px 70px}
+  .view,.chapter-head,.chapter-body,.home-hero,.home-note,.home-h2,.suite-grid,.layer-stack,.home-cores,.home-usage{max-width:100%;min-width:0}
+  .chapter-head{padding:19px 19px}
+  .chapter-body{padding:21px 18px}
+  .hero-metrics{grid-template-columns:repeat(2,1fr)}
+  .two-col,.three-col{grid-template-columns:1fr}
+  .integration-map{grid-template-columns:1fr}
+  .integration-links{transform:rotate(90deg);height:18px}
+  .arch-layer,.layer-row{grid-template-columns:1fr}
+  .arch-key,.layer-key{justify-content:flex-start;padding-left:12px}
+  .summary-card{min-height:auto}
+}
+@media (max-width:540px){
+  .brand{display:none}
+  .brand-title{max-width:120px}
+  .search-wrap{max-width:none}
+  #searchInput{font-size:12px;padding:7px 10px}
+  .top-actions .icon-btn:not(#btnTheme){display:none}
+  .home-hero h1{font-size:24px}
+  .flow-strip{display:grid;grid-template-columns:1fr}
+  .flow-arrow{justify-content:center;transform:rotate(90deg);height:12px}
+}
+@media print{
+  body{overflow:visible;background:#fff}
+  .topbar,.sidebar,.sidebar-scrim,.back-top,.flow-tabs{display:none!important}
+  .layout{position:static;display:block}
+  .main{overflow:visible;padding:0;background:#fff}
+  .view{display:none!important;max-width:none}
+  .view.active{display:block!important}
+  body.printing-all .view{display:block!important;break-before:page}
+  .chapter-head,.chapter-body{box-shadow:none;border-color:#ddd}
+  mark.hl{background:none}
+  .print-footer{display:block;text-align:center;color:#777;font-size:10px;margin-top:16px}
+  a{color:inherit;text-decoration:none}
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <button class="icon-btn" id="btnSidebar" title="收起/展开侧边栏" aria-label="收起或展开侧边栏">☰</button>
+  <div class="brand">
+    <div class="brand-title">AIDT 企业业务操作系统</div>
+    <div class="brand-sub">全量功能与流程架构 · 导航版 · 离线可用</div>
+  </div>
+  <div class="filter-wrap">
+    <span class="filter-label">📂 分类视图</span>
+    <select id="catFilter" class="cat-select" aria-label="选择分类视图">
+      <option value="">全部分类</option>
+      <option value="strategy">战略与边界</option>
+      <option value="platform">平台与能力</option>
+      <option value="business">业务板块</option>
+      <option value="process">流程与集成</option>
+      <option value="automation">智能自动化</option>
+      <option value="governance">治理与落地</option>
+    </select>
+  </div>
+  <div class="search-wrap">
+    <input id="searchInput" type="text" placeholder="全文搜索：如「DCS」「批次」「数字员工」「U9」…" autocomplete="off">
+    <div id="searchResults" class="search-results hidden"></div>
+  </div>
+  <div class="top-actions">
+    <span class="ver-chip">蓝图 v0.1 · 14 章</span>
+    <button class="icon-btn" id="btnPrintCh" title="打印当前章节">🖨</button>
+    <button class="icon-btn" id="btnPrintAll" title="打印全部章节">⧉</button>
+    <button class="icon-btn" id="btnTheme" title="切换深色/浅色">◐</button>
+  </div>
+</header>
+
+<div class="layout">
+  <nav class="sidebar" id="sidebar" aria-label="章节导航">
+    <div class="sidebar-head">
+      <button class="tree-home" id="btnHome">🏠 总览</button>
+      <button class="link-btn" id="btnCollapseAll">折叠全部</button>
+      <button class="link-btn" id="btnExpandAll">展开全部</button>
+    </div>
+    <div class="legend">
+      <span class="legend-item"><i class="legend-dot" style="background:#1f5a96"></i>决策</span>
+      <span class="legend-item"><i class="legend-dot" style="background:#0f8ba5"></i>架构</span>
+      <span class="legend-item"><i class="legend-dot" style="background:#138a63"></i>业务</span>
+      <span class="legend-item"><i class="legend-dot" style="background:#7653b8"></i>智能</span>
+      <span class="legend-item"><i class="legend-dot" style="background:#c74242"></i>治理</span>
+    </div>
+    <div class="tree" id="tree"></div>
+    <div class="sidebar-note">
+      本蓝图以“对象先行、事件驱动、流程编排、数据有账、智能可审批”为基线。<br>
+      配方、客户、成本、工艺参数按核心商密处理。
+    </div>
+  </nav>
+  <div class="sidebar-scrim" id="sidebarScrim"></div>
+
+  <main class="main" id="main">
+    <section class="view active" id="home">
+      <div class="home-hero">
+        <div class="home-kicker">PUSAIDA · AIDT BLUEPRINT</div>
+        <h1>AIDT <span>企业业务操作系统</span></h1>
+        <p class="home-sub">对象是骨 · 事件是血 · 流程是神经 · 数据是账本 · 数字员工是执行者</p>
+        <span class="home-ver">管理层决策版 · 架构设计版 · FDE 落地版 · 2026-10-27</span>
+        <div class="hero-metrics">
+          <div class="metric-card"><div class="metric-num">1</div><div class="metric-label">统一平台内核</div></div>
+          <div class="metric-card"><div class="metric-num">3</div><div class="metric-label">产品套件</div></div>
+          <div class="metric-card"><div class="metric-num">13+</div><div class="metric-label">部门工作台</div></div>
+          <div class="metric-card"><div class="metric-num">6</div><div class="metric-label">架构层</div></div>
+        </div>
+      </div>
+      <div class="home-note">
+        <b>董事长视角结论：</b>不批准“把流程设计器做成整个系统”。批准建设“一套平台内核 + 三套产品族 + N 个部门工作台”，采用 80% 标准配置、15% 参数化、5% 平台扩展的方式控制开发体量与治理风险。
+      </div>
+
+      <h2 class="home-h2">三套产品族</h2>
+      <div class="suite-grid">
+        <div class="suite-card" data-go="ch-03" style="--sc:#1f5a96">
+          <div class="suite-icon">⚙️</div><b>AIDT Core OS</b>
+          <span>身份、对象、表单、流程、规则、事件、文档、数据、连接器、审计。</span>
+          <span class="suite-tag">平台内核</span>
+        </div>
+        <div class="suite-card" data-go="ch-06" style="--sc:#138a63">
+          <div class="suite-icon">🏭</div><b>AIDT Operations</b>
+          <span>研发、实验室、生产、质量、设备、EHS、供应链、仓储与交付。</span>
+          <span class="suite-tag">研发生产运营</span>
+        </div>
+        <div class="suite-card" data-go="ch-10" style="--sc:#e98514">
+          <div class="suite-icon">📊</div><b>AIDT Management</b>
+          <span>客户、合同、项目、财务、人力、经营目标与决策驾驶舱。</span>
+          <span class="suite-tag">经营管理</span>
+        </div>
+        <div class="suite-card" data-go="ch-13" style="--sc:#7653b8">
+          <div class="suite-icon">🤖</div><b>Digital Workforce</b>
+          <span>数字员工、Skill、MCP、定时任务、事件触发、智能审批与执行审计。</span>
+          <span class="suite-tag">横向贯穿</span>
+        </div>
+      </div>
+
+      <h2 class="home-h2">六层架构</h2>
+      <div class="layer-stack">
+        <div class="layer-row"><div class="layer-key" style="--lc:#17385f">体验层</div><div class="layer-val"><span class="chip">PC工作台</span><span class="chip">移动端</span><span class="chip">钉钉</span><span class="chip">扫码/PDA</span><span class="chip">车间大屏</span></div></div>
+        <div class="layer-row"><div class="layer-key" style="--lc:#1f5a96">协同层</div><div class="layer-val"><span class="chip">项目</span><span class="chip">任务</span><span class="chip">审批</span><span class="chip">会议</span><span class="chip">变更</span><span class="chip">问题闭环</span></div></div>
+        <div class="layer-row"><div class="layer-key" style="--lc:#0f8ba5">编排层</div><div class="layer-val"><span class="chip">人工流程</span><span class="chip">自动化流程</span><span class="chip">定时任务</span><span class="chip">事件规则</span><span class="chip">数字员工</span></div></div>
+        <div class="layer-row"><div class="layer-key" style="--lc:#138a63">能力层</div><div class="layer-val"><span class="chip">通用能力</span><span class="chip">领域能力包</span><span class="chip">对象/表单/动作</span><span class="chip">规则/指标</span></div></div>
+        <div class="layer-row"><div class="layer-key" style="--lc:#7653b8">数据层</div><div class="layer-val"><span class="chip">业务账本</span><span class="chip">事件证据</span><span class="chip">主数据</span><span class="chip">湖仓</span><span class="chip">时序数据</span></div></div>
+        <div class="layer-row"><div class="layer-key" style="--lc:#64748b">连接层</div><div class="layer-val"><span class="chip">API</span><span class="chip">事件总线</span><span class="chip">CDC/ETL</span><span class="chip">OPC UA/MQTT</span><span class="chip">文件/邮件</span></div></div>
+      </div>
+
+      <h2 class="home-h2">四条不可动摇的设计原则</h2>
+      <div class="home-cores">
+        <div class="home-core"><b>对象先行</b><p>同一现实实体只有一个主对象，流程引用对象，不复制对象。</p></div>
+        <div class="home-core"><b>事件驱动</b><p>数据产生与状态变化触发规则、任务、通知、接口和数字员工。</p></div>
+        <div class="home-core"><b>全量能力、分级启用</b><p>能力库一次建设、按部门逐步启用，不等于第一天让全员自由配置。</p></div>
+        <div class="home-core"><b>专业系统各守其责</b><p>U9 管财务权威、ERP 管计划交易、DCS 管实时控制，AIDT 管协同决策与证据。</p></div>
+      </div>
+
+      <h2 class="home-h2">建议阅读顺序</h2>
+      <ol class="home-usage">
+        <li><b>管理层：</b>01 战略判断 → 02 数据边界 → 03 产品结构 → 14 路线图。</li>
+        <li><b>业务负责人：</b>04 元模型 → 05 通用能力 → 06 业务总图 → 所属部门章节 → 11 样板流程。</li>
+        <li><b>架构与FDE：</b>02 数据边界 → 04 平台元模型 → 09 流程 → 10 集成 → 12 数字员工 → 13 治理。</li>
+      </ol>
+    </section>
+
+    <section class="view" id="ch-01" data-cat="strategy" style="--cc:#1f5a96">
+      <div class="chapter-head">
+        <span class="chapter-badge">战略层 · 董事会判断</span>
+        <h2 class="chapter-title"><span class="chapter-num">01</span> 战略判断与设计边界</h2>
+        <p class="chapter-sub">流程不是中心 · 能力必须复用 · 部门自主必须有边界</p>
+      </div>
+      <div class="chapter-body">
+        <h1 class="md-h1">01 · 战略判断与设计边界</h1>
+        <blockquote><b>核心结论：</b>AIDT 的竞争力不在于“能画多少流程”，而在于“同样的业务能力能否被不同部门低成本复用”。流程配置是产品能力，不是产品本身。</blockquote>
+
+        <h2 class="md-h2" id="s-01-1">1.1 原方案中正确的判断</h2>
+        <div class="three-col">
+          <div class="info-card"><h4>✅ 事件触发流程</h4><p>数据产生、状态变化、外部报警可以自动触发后续任务和处理，这是正确方向。</p></div>
+          <div class="info-card"><h4>✅ 能力配置替代定制</h4><p>把审批、任务、通知、表单、报表、接口做成可配置能力，可显著减少部门定制开发。</p></div>
+          <div class="info-card"><h4>✅ 数字员工参与执行</h4><p>通过Skill、MCP、定时和事件触发，让AI成为流程参与者是合理的演进方向。</p></div>
+        </div>
+
+        <h2 class="md-h2" id="s-01-2">1.2 必须纠正的四个误区</h2>
+        <div class="table-wrap"><table>
+          <thead><tr><th>误区</th><th>为什么有问题</th><th>正确设计</th></tr></thead>
+          <tbody>
+            <tr><td>把流程当作唯一设计轴</td><td>流程只描述先后和责任人，不能定义业务实体、字段、状态和数据关系</td><td>对象先行，流程编排对象上的动作</td></tr>
+            <tr><td>所有部门自由建流程</td><td>出现重复表单、重复对象、权限失控、流程孤岛和配置债务</td><td>标准能力库 + 分级配置 + 发布治理</td></tr>
+            <tr><td>所有功能第一天全量开放</td><td>业务尚未标准化，用户培训和系统稳定性会被同时拖垮</td><td>能力库全量规划，按试点—推广—规模化启用</td></tr>
+            <tr><td>用低代码代替所有后端</td><td>MRP、配方版本、批次追溯、财务规则、DCS协议等不可能靠画流程实现</td><td>平台内核 + 领域能力包 + 少量工程扩展</td></tr>
+          </tbody>
+        </table></div>
+
+        <h2 class="md-h2" id="s-01-3">1.3 董事长应批准什么、拒绝什么</h2>
+        <div class="two-col">
+          <div class="callout ok"><div class="callout-title">✅ 应批准</div>
+            <ul><li>建设统一平台内核和统一数据模型</li><li>先做 3 个跨部门样板流程</li><li>建立能力包和标准模板机制</li><li>把FDE定位为业务配置与落地角色</li><li>数字员工独立身份和审批边界</li></ul>
+          </div>
+          <div class="callout risk"><div class="callout-title">⛔ 应拒绝</div>
+            <ul><li>各部门自行购买或搭建“小系统”</li><li>让业务人员直接决定数据库结构</li><li>每个部门定制一套后端</li><li>让AIDT替代DCS安全联锁</li><li>没有日志和审批的“全自动”</li></ul>
+          </div>
+        </div>
+
+        <h2 class="md-h2" id="s-01-4">1.4 平台成功标准</h2>
+        <ol class="number-list">
+          <li><b>复用率：</b>80%以上新流程由既有对象、表单、动作、规则和能力包组合完成。</li>
+          <li><b>变更速度：</b>普通部门流程调整在1—5个工作日内完成，不进入后端发版。</li>
+          <li><b>数据一致性：</b>客户、物料、供应商、批次、项目和员工具有统一ID与追溯链。</li>
+          <li><b>治理可控：</b>每一次流程发布、数字员工执行和跨系统写回都可审计、可回滚。</li>
+        </ol>
+
+        <h2 class="md-h2" id="s-01-5">1.5 一句话产品定义</h2>
+        <div class="callout"><div class="callout-title">AIDT = 普赛达的企业业务操作系统</div>
+          它让各部门在同一对象、同一数据、同一权限和同一流程内核上工作；让AI和数字员工在明确授权边界内参与执行；让U9、ERP、DCS等专业系统保持各自权威，同时通过AIDT形成跨系统闭环。
+        </div>
+        <div class="confidential">保密提示：后续迭代涉及配方、客户、成本、报价和工艺参数时，应默认按核心商业秘密管理，并按数据分级配置访问与模型路由。</div>
+      </div>
+    </section>
+
+    <section class="view" id="ch-02" data-cat="strategy" style="--cc:#1f5a96">
+      <div class="chapter-head">
+        <span class="chapter-badge">战略层 · 数据治理</span>
+        <h2 class="chapter-title"><span class="chapter-num">02</span> 数据归属与系统边界</h2>
+        <p class="chapter-sub">AIDT 做统一数据面，不等于取代所有专业系统</p>
+      </div>
+      <div class="chapter-body">
+        <h1 class="md-h1">02 · 数据归属与系统边界</h1>
+        <blockquote>“以AIDT为数据归属地”必须拆成四个概念：<b>业务权威源、物理主副本、集成副本、统一使用入口</b>。否则财务账、控制参数和流程记录会互相冲突。</blockquote>
+
+        <h2 class="md-h2" id="s-02-1">2.1 四类数据归属</h2>
+        <div class="table-wrap"><table>
+          <thead><tr><th>概念</th><th>定义</th><th>建议</th></tr></thead>
+          <tbody>
+            <tr><td>业务权威源</td><td>哪个系统拥有最终写权限，其他系统不得随意覆盖</td><td>按业务域明确到字段和动作级</td></tr>
+            <tr><td>物理主副本</td><td>数据长期集中存放在哪里</td><td>可由AIDT数据平台承载</td></tr>
+            <tr><td>集成副本</td><td>从U9、ERP、DCS同步来的数据镜像</td><td>保留来源、时间戳、血缘和版本</td></tr>
+            <tr><td>统一使用入口</td><td>人、报表、知识和AI从哪里访问</td><td>统一通过AIDT权限与目录</td></tr>
+          </tbody>
+        </table></div>
+
+        <h2 class="md-h2" id="s-02-2">2.2 系统权责矩阵</h2>
+        <div class="table-wrap"><table>
+          <thead><tr><th>系统</th><th>权威业务</th><th>AIDT角色</th><th>写入原则</th></tr></thead>
+          <tbody>
+            <tr><td><b>U9</b></td><td>财务凭证、总账、应收应付、成本与部分库存账</td><td>读取、分析、预算与费用前置控制</td><td>受控命令接口；审批通过后才回写，禁止直接写业务库</td></tr>
+            <tr><td><b>ERP</b></td><td>客户订单、物料需求、计划、工单、采购、库存业务</td><td>跨部门流程、异常、变更、交付协同</td><td>通过标准API/事件写回，保留幂等和业务关联ID</td></tr>
+            <tr><td><b>DCS</b></td><td>实时工艺参数、设备状态、联锁、报警</td><td>报警摘要、批次关联、异常处置与证据</td><td>只读为主；禁止接管安全控制闭环</td></tr>
+            <tr><td><b>AIDT</b></td><td>项目、任务、审批、研发、实验、质量异常、变更、文档、知识和AI执行记录</td><td>业务主账本、流程账本、证据账本与数据入口</td><td>本域内可写；跨域写回必须遵守权威源</td></tr>
+            <tr><td><b>AIDT湖仓</b></td><td>跨系统分析、历史留存、指标与AI语料</td><td>ODS、标准化数据、指标层和检索层</td><td>只存可追溯副本与派生结果，不替代源系统</td></tr>
+            <tr><td><b>钉钉</b></td><td>组织身份、消息、移动入口</td><td>单点登录、待办、通知、移动审批</td><td>不作为业务主账本</td></tr>
+          </tbody>
+        </table></div>
+
+        <h2 class="md-h2" id="s-02-3">2.3 读写权限必须落到字段与动作</h2>
+        <div class="rule-grid">
+          <div class="rule-card"><b><span class="status-dot" style="background:var(--green)"></span>读取权</b><span>按角色、组织、项目、数据级别和字段敏感度控制。</span></div>
+          <div class="rule-card"><b><span class="status-dot" style="background:var(--orange)"></span>申请写</b><span>提交业务命令，由目标系统校验后执行。</span></div>
+          <div class="rule-card"><b><span class="status-dot" style="background:var(--red)"></span>直接写</b><span>仅限本系统权威域；禁止跨系统直写数据库。</span></div>
+          <div class="rule-card"><b><span class="status-dot" style="background:var(--purple)"></span>AI代理写</b><span>必须有数字员工身份、能力授权、限额与审计。</span></div>
+        </div>
+
+        <h2 class="md-h2" id="s-02-4">2.4 哪些数据由AIDT主账</h2>
+        <div class="two-col">
+          <div class="callout ok"><div class="callout-title">建议AIDT主账</div>
+            <ul><li>流程实例、任务、审批、电子签名与证据</li><li>项目、阶段门、风险、问题、变更</li><li>研发项目、配方版本、实验、样品与结果</li><li>质量偏差、CAPA、客诉和变更控制</li><li>知识、SOP、制度、培训与执行记录</li><li>跨系统业务事件与AI执行记录</li></ul>
+          </div>
+          <div class="callout warn"><div class="callout-title">不建议AIDT替代</div>
+            <ul><li>U9的法定财务账和凭证</li><li>DCS/PLC的实时控制和联锁</li><li>ERP既有的订单、计划和库存交易记账</li><li>专业仪器原始采集与设备安全控制</li></ul>
+          </div>
+        </div>
+
+        <h2 class="md-h2" id="s-02-5">2.5 统一业务关联链</h2>
+        <div class="formula">
+          <code>客户需求</code><span>→</span><code>项目</code><span>→</span><code>实验</code><span>→</span><code>配方版本</code><span>→</span><code>试产</code><span>→</span><code>工单</code><span>→</span><code>批次</code><span>→</span><code>检验/放行</code><span>→</span><code>交付</code>
+        </div>
+        <p>每个对象都保留上游引用、版本、来源系统和时间戳。查询任意批次时，应能反向追溯到客户需求、研发配方版本、原料批次、生产参数、质量判定、发货记录和售后反馈。</p>
+
+        <h2 class="md-h2" id="s-02-6">2.6 责任级别提醒</h2>
+        <div class="callout risk"><div class="callout-title">AIDT一旦承担批次放行、质量判定和电子签名，就不是普通网站</div>
+          必须具备高可用、备份恢复、审计追踪、版本控制、电子签名、权限隔离、数据留存和应急切换。项目立项时应明确该部分的SLA、RTO/RPO和验证责任。</div>
+      </div>
+    </section>
+
+    <section class="view" id="ch-03" data-cat="strategy" style="--cc:#1f5a96">
+      <div class="chapter-head">
+        <span class="chapter-badge">战略层 · 产品蓝图</span>
+        <h2 class="chapter-title"><span class="chapter-num">03</span> 产品结构与体验门户</h2>
+        <p class="chapter-sub">一个内核 · 三套产品族 · 三类交互形态</p>
+      </div>
+      <div class="chapter-body">
+        <h1 class="md-h1">03 · 产品结构与体验门户</h1>
+        <h2 class="md-h2" id="s-03-1">3.1 三套产品族与一个横向能力</h2>
+        <div class="three-col">
+          <div class="info-card"><h4>⚙️ AIDT Core OS</h4><p>身份、组织、对象、表单、流程、规则、事件、文档、数据、连接器、审计和配置中心。</p></div>
+          <div class="info-card"><h4>🏭 AIDT Operations</h4><p>研发、实验室、生产、质量、设备、EHS、供应链、仓储和交付。</p></div>
+          <div class="info-card"><h4>📊 AIDT Management</h4><p>客户、销售、项目、财务、人力、法务、经营目标和决策驾驶舱。</p></div>
+        </div>
+        <div class="callout"><div class="callout-title">🤖 Digital Workforce 不是第四套独立系统</div>数字员工中心横跨三套产品，为所有流程提供Skill、MCP、事件触发、定时任务、内容生成、分析和受控执行能力。</div>
+
+        <h2 class="md-h2" id="s-03-2">3.2 三类使用形态</h2>
+        <div class="table-wrap"><table>
+          <thead><tr><th>形态</th><th>使用者</th><th>核心体验</th></tr></thead>
+          <tbody>
+            <tr><td>管理配置端</td><td>平台团队、FDE、流程负责人</td><td>对象建模、流程设计、规则、权限、版本、测试、发布、监控</td></tr>
+            <tr><td>专业业务工作台</td><td>研发、质量、财务、采购、交付人员</td><td>按岗位聚合待办、项目、数据、文档、看板和异常</td></tr>
+            <tr><td>一线员工端</td><td>生产、仓储、设备巡检人员</td><td>扫码、极简确认、拍照、语音、离线暂存、班组交接和异常上报</td></tr>
+          </tbody>
+        </table></div>
+
+        <h2 class="md-h2" id="s-03-3">3.3 平台一级信息架构</h2>
+        <div class="layer-stack">
+          <div class="layer-row"><div class="layer-key" style="--lc:#17385f">我的工作</div><div class="layer-val"><span class="chip">待办</span><span class="chip">我发起的</span><span class="chip">抄送</span><span class="chip">项目</span><span class="chip">日历</span><span class="chip">提醒</span></div></div>
+          <div class="layer-row"><div class="layer-key" style="--lc:#1f5a96">业务工作台</div><div class="layer-val"><span class="chip">研发实验</span><span class="chip">生产质量</span><span class="chip">供应链</span><span class="chip">交付售后</span><span class="chip">财务人力</span></div></div>
+          <div class="layer-row"><div class="layer-key" style="--lc:#0f8ba5">流程中心</div><div class="layer-val"><span class="chip">发起</span><span class="chip">跟踪</span><span class="chip">异常</span><span class="chip">SLA</span><span class="chip">流程模板</span><span class="chip">版本</span></div></div>
+          <div class="layer-row"><div class="layer-key" style="--lc:#138a63">数据与知识</div><div class="layer-val"><span class="chip">业务对象</span><span class="chip">主数据</span><span class="chip">报表</span><span class="chip">指标</span><span class="chip">文档</span><span class="chip">知识库</span></div></div>
+          <div class="layer-row"><div class="layer-key" style="--lc:#7653b8">数字员工</div><div class="layer-val"><span class="chip">数字员工目录</span><span class="chip">技能</span><span class="chip">任务运行</span><span class="chip">审批授权</span><span class="chip">执行审计</span></div></div>
+          <div class="layer-row"><div class="layer-key" style="--lc:#c74242">平台治理</div><div class="layer-val"><span class="chip">组织权限</span><span class="chip">对象模型</span><span class="chip">规则</span><span class="chip">连接器</span><span class="chip">发布与审计</span></div></div>
+        </div>
+
+        <h2 class="md-h2" id="s-03-4">3.4 产品边界</h2>
+        <div class="two-col">
+          <div class="callout ok"><div class="callout-title">AIDT负责</div><p>统一入口、跨部门协同、业务对象、流程编排、任务审批、异常闭环、数据整合、指标体系、知识沉淀、AI执行与审计。</p></div>
+          <div class="callout warn"><div class="callout-title">专业系统负责</div><p>财务法定账、实时控制、仪器采集、设备联锁、专业算法和必须保留在原系统中的法规记录。</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="ch-04" data-cat="platform" style="--cc:#0f8ba5">
+      <div class="chapter-head">
+        <span class="chapter-badge">平台层 · 元模型</span>
+        <h2 class="chapter-title"><span class="chapter-num">04</span> 平台元模型与配置边界</h2>
+        <p class="chapter-sub">14类元模型 · L1—L4配置分级 · 对象—状态—事件—动作</p>
+      </div>
+      <div class="chapter-body">
+        <h1 class="md-h1">04 · 平台元模型与配置边界</h1>
+        <blockquote>部门真正需要配置的不是“页面”，而是业务对象、状态、动作、规则、流程、权限和视图。元模型稳定后，页面和流程才能低成本生成。</blockquote>
+
+        <h2 class="md-h2" id="s-04-1">4.1 元模型清单</h2>
+        <div class="table-wrap"><table>
+          <thead><tr><th>元模型</th><th>作用</th><th>示例</th></tr></thead>
+          <tbody>
+            <tr><td>业务对象类型</td><td>定义现实业务实体</td><td>实验单、批次、供应商、合同</td></tr>
+            <tr><td>字段定义</td><td>类型、校验、敏感等级、来源</td><td>配方版本号、检验值、交期</td></tr>
+            <tr><td>对象关系</td><td>建立上下游与引用关系</td><td>客户—订单—批次—检验</td></tr>
+            <tr><td>状态机</td><td>管理对象生命周期</td><td>草稿→审批中→执行中→放行→关闭</td></tr>
+            <tr><td>业务动作</td><td>对对象执行的受控命令</td><td>提交、批准、下发、领料、放行</td></tr>
+            <tr><td>规则</td><td>条件、阈值、决策表</td><td>金额、库存、质量结果、时间</td></tr>
+            <tr><td>工作流</td><td>人机协同与自动执行</td><td>审批、会签、异常升级、定时任务</td></tr>
+            <tr><td>事件</td><td>对象变化和外部消息</td><td>实验完成、DCS报警、订单变更</td></tr>
+            <tr><td>权限策略</td><td>菜单、数据、字段、动作授权</td><td>研发人员只能看本项目配方</td></tr>
+            <tr><td>视图</td><td>PC、移动、扫码、大屏</td><td>班组工作台、实验详情页</td></tr>
+            <tr><td>连接器</td><td>外部系统接口与映射</td><td>U9库存、ERP工单、DCS报警</td></tr>
+            <tr><td>技能</td><td>可复用的AI能力</td><td>报告生成、异常比对、知识检索</td></tr>
+            <tr><td>数字员工</td><td>身份、权限、能力与限额</td><td>研发助理、应收分析员</td></tr>
+            <tr><td>证据</td><td>审批、签名、附件、执行凭证</td><td>版本、审计日志、AI操作记录</td></tr>
+          </tbody>
+        </table></div>
+
+        <h2 class="md-h2" id="s-04-2">4.2 配置分级 L1—L4</h2>
+        <div class="table-wrap"><table>
+          <thead><tr><th>级别</th><th>配置内容</th><th>配置人</th><th>是否需要审批</th></tr></thead>
+          <tbody>
+            <tr><td><b>L1 个人/班组</b></td><td>个人视图、提醒、快捷操作、筛选条件</td><td>员工/班组长</td><td>否</td></tr>
+            <tr><td><b>L2 部门流程</b></td><td>字段、节点、审批人、SLA、通知、报表</td><td>部门负责人/FDE</td><td>部门流程变更需平台审核</td></tr>
+            <tr><td><b>L3 领域能力包</b></td><td>对象、状态机、跨部门规则、接口映射</td><td>领域产品经理+平台团队</td><td>是</td></tr>
+            <tr><td><b>L4 平台内核</b></td><td>身份、数据模型、连接器、安全、审计</td><td>核心平台团队</td><td>架构委员会</td></tr>
+          </tbody>
+        </table></div>
+
+        <h2 class="md-h2" id="s-04-3">4.3 业务运行五步法</h2>
+        <div class="formula">
+          <code>业务对象</code><span>→</span><code>状态变化</code><span>→</span><code>业务事件</code><span>→</span><code>规则判断</code><span>→</span><code>流程/技能执行</code>
+        </div>
+        <div class="two-col">
+          <div class="info-card"><h4>对象层</h4><p>确保一个实验、一个批次、一个客户在系统里只有一个主对象，其他记录通过引用关联。</p></div>
+          <div class="info-card"><h4>流程层</h4><p>流程只决定“谁在什么条件下做什么”，不复制业务对象，也不重复存储原始数据。</p></div>
+        </div>
+
+        <h2 class="md-h2" id="s-04-4">4.4 发布治理必须具备</h2>
+        <div class="rule-grid">
+          <div class="rule-card"><b>版本</b><span>草稿、测试、发布、回滚，所有对象和流程均可追溯。</span></div>
+          <div class="rule-card"><b>沙箱</b><span>部门变更先在测试环境跑通，再进入生产。</span></div>
+          <div class="rule-card"><b>影响分析</b><span>修改字段前识别受影响的表单、流程、报表和数字员工。</span></div>
+          <div class="rule-card"><b>运行监控</b><span>超时、失败、循环、接口异常和权限越界可告警。</span></div>
+        </div>
+
+        <h2 class="md-h2" id="s-04-5">4.5 配置边界结论</h2>
+        <div class="callout warn"><div class="callout-title">目标不是“完全零代码”，而是“80/15/5”</div>
+          80%通过标准能力包和模板配置完成；15%通过参数化、规则和页面布局调整完成；5%由平台团队进行受控扩展。这个比例才能兼顾部门自主和平台稳定。
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="ch-05" data-cat="platform" style="--cc:#0f8ba5">
+      <div class="chapter-head">
+        <span class="chapter-badge">平台层 · 能力复用</span>
+        <h2 class="chapter-title"><span class="chapter-num">05</span> 通用能力库</h2>
+        <p class="chapter-sub">通用能力建一次 · 业务部门反复组合 · 领域包少量扩展</p>
+      </div>
+      <div class="chapter-body">
+        <h1 class="md-h1">05 · 通用能力库</h1>
+        <blockquote>减少开发量的关键不是“什么都能配置”，而是先把审批、任务、文档、异常、变更、通知和报表等共性问题只实现一次。</blockquote>
+
+        <h2 class="md-h2" id="s-05-1">5.1 20项横向能力</h2>
+        <div class="rule-grid">
+          <div class="rule-card"><b>01 业务对象</b><span>类型、字段、关系、状态、版本。</span></div>
+          <div class="rule-card"><b>02 动态表单</b><span>PC、移动、只读、审批和打印布局。</span></div>
+          <div class="rule-card"><b>03 视图</b><span>列表、看板、日历、甘特、扫码、大屏。</span></div>
+          <div class="rule-card"><b>04 流程审批</b><span>会签、或签、转办、加签、退回、升级。</span></div>
+          <div class="rule-card"><b>05 任务待办</b><span>我的工作、团队任务、SLA和委托。</span></div>
+          <div class="rule-card"><b>06 规则引擎</b><span>条件、阈值、决策表和优先级。</span></div>
+          <div class="rule-card"><b>07 定时任务</b><span>周期检查、日报、催办和数据对账。</span></div>
+          <div class="rule-card"><b>08 事件中心</b><span>发布、订阅、重放、幂等和失败队列。</span></div>
+          <div class="rule-card"><b>09 通知</b><span>站内、钉钉、邮件、短信、升级。</span></div>
+          <div class="rule-card"><b>10 文档附件</b><span>版本、模板、OCR、在线预览和归档。</span></div>
+          <div class="rule-card"><b>11 电子签名</b><span>签名人、意图、时间、版本和证据链。</span></div>
+          <div class="rule-card"><b>12 项目里程碑</b><span>WBS、计划、阶段门、资源和风险。</span></div>
+          <div class="rule-card"><b>13 问题异常</b><span>上报、分级、分析、处置和关闭。</span></div>
+          <div class="rule-card"><b>14 变更管理</b><span>影响分析、审批、实施和验证。</span></div>
+          <div class="rule-card"><b>15 检查表巡检</b><span>计划、扫码、证据、整改和复查。</span></div>
+          <div class="rule-card"><b>16 指标报表</b><span>口径、聚合、趋势、钻取和驾驶舱。</span></div>
+          <div class="rule-card"><b>17 连接器</b><span>认证、映射、重试、对账和监控。</span></div>
+          <div class="rule-card"><b>18 导入导出</b><span>模板、校验、批次、错误回执和回滚。</span></div>
+          <div class="rule-card"><b>19 AI技能</b><span>版本、测试、权限、调用和成本。</span></div>
+          <div class="rule-card"><b>20 审计与版本</b><span>谁在何时因何修改了什么，能否回滚。</span></div>
+        </div>
+
+        <h2 class="md-h2" id="s-05-2">5.2 领域能力包</h2>
+        <div class="table-wrap"><table>
+          <thead><tr><th>能力包</th><th>包含对象</th><th>复用场景</th></tr></thead>
+          <tbody>
+            <tr><td>研发实验包</td><td>项目、配方版本、实验、样品、测试结果</td><td>研发、实验室、技术服务和客户样品</td></tr>
+            <tr><td>批次追溯包</td><td>工单、批次、原料批次、工艺参数、检验、放行</td><td>生产、质量、交付和客诉追溯</td></tr>
+            <tr><td>质量闭环包</td><td>检验、不合格、偏差、CAPA、变更、客诉</td><td>质量、生产、供应商和研发</td></tr>
+            <tr><td>采购到付款包</td><td>请购、询价、采购、到货、验收、付款</td><td>供应链、财务、生产和研发</td></tr>
+            <tr><td>订单到交付包</td><td>订单、库存、发货、物流、签收、验收</td><td>销售、仓储、交付和客户门户</td></tr>
+            <tr><td>设备维保包</td><td>台账、点检、保养、维修、校准、备件</td><td>生产、设备、实验室和质量</td></tr>
+            <tr><td>项目阶段门包</td><td>项目、WBS、里程碑、风险、验收、复盘</td><td>研发、交付、技改和管理项目</td></tr>
+            <tr><td>合同履约包</td><td>相对方、合同、印章、付款、到期提醒</td><td>销售、采购、财务、法务</td></tr>
+          </tbody>
+        </table></div>
+
+        <h2 class="md-h2" id="s-05-3">5.3 能力包清单 Manifest</h2>
+        <p>每一个领域能力包都应以“可安装、可升级、可测试”的产品形态存在，至少包含：</p>
+        <div class="two-col">
+          <div class="info-card"><h4>业务定义</h4><ul><li>对象与关系</li><li>状态机</li><li>表单与视图</li><li>角色与数据权限</li></ul></div>
+          <div class="info-card"><h4>运行定义</h4><ul><li>规则与流程模板</li><li>接口映射</li><li>指标与报表</li><li>数字员工技能</li></ul></div>
+        </div>
+        <p>能力包发布时同时提供测试样例、数据字典、升级说明和回滚策略。这样才能从“项目交付”转为“产品运营”。</p>
+
+        <h2 class="md-h2" id="s-05-4">5.4 部门看到的不是技术组件</h2>
+        <div class="callout"><div class="callout-title">业务使用者看到的是场景</div>
+          研发人员看到“我的实验、样品、待评审”；生产班组看到“我的工单、异常、交接班”；财务看到“待审预算、付款、发票差异”。底层仍然复用同一套对象、权限、流程和连接器。
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="ch-06" data-cat="business" style="--cc:#138a63">
+      <div class="chapter-head">
+        <span class="chapter-badge">业务层 · 全量地图</span>
+        <h2 class="chapter-title"><span class="chapter-num">06</span> 全量业务板块总图</h2>
+        <p class="chapter-sub">13+部门工作台 · 统一对象 · 标准流程模板 · 系统协同</p>
+      </div>
+      <div class="chapter-body">
+        <h1 class="md-h1">06 · 全量业务板块总图</h1>
+        <blockquote>部门工作台是同一平台上的配置视图，不是13套独立后台。统一内核负责底座，领域能力包负责业务深度，部门模板负责实际落地。</blockquote>
+
+        <h2 class="md-h2" id="s-06-1">6.1 业务板块全景</h2>
+        <div class="table-wrap"><table>
+          <thead><tr><th>工作台</th><th>核心对象</th><th>典型流程</th><th>外部协同</th></tr></thead>
+          <tbody>
+            <tr><td><b>研发与实验室</b></td><td>项目、配方版本、实验、样品、测试结果、原料、试产</td><td>需求→立项→设计→领料→实验→测试→评审→试产→转产</td><td>U9、LIMS/仪器、DCS</td></tr>
+            <tr><td><b>项目与PMO</b></td><td>项目、WBS、里程碑、风险、问题、变更、验收</td><td>立项→计划→执行→阶段门→变更→验收→复盘</td><td>ERP、财务、交付</td></tr>
+            <tr><td><b>客户与销售</b></td><td>客户、联系人、商机、报价、样品申请、合同、预测</td><td>线索→商机→报价→样品→合同→订单→回款</td><td>ERP、U9、钉钉</td></tr>
+            <tr><td><b>计划与供应链</b></td><td>预测、S&OP、MRP、请购、采购、供应商、到货、库存</td><td>预测→计划→请购→采购→到货→检验→入库→齐套</td><td>ERP、U9、WMS、供应商门户</td></tr>
+            <tr><td><b>生产制造</b></td><td>计划、工单、批次、配方执行、领料、报工、停机、返工</td><td>工单→领料→生产→过程记录→异常→完工→入库</td><td>ERP、DCS、WMS</td></tr>
+            <tr><td><b>质量管理</b></td><td>检验、CoA、偏差、OOS、不合格、CAPA、客诉、变更</td><td>发现→隔离→调查→处置→审批→纠正预防→验证</td><td>DCS、ERP、实验室、客户门户</td></tr>
+            <tr><td><b>设备与EHS</b></td><td>设备、点检、保养、维修、校准、备件、隐患、事故</td><td>点检→异常→维修→验收；隐患→整改→复查</td><td>DCS、ERP、钉钉</td></tr>
+            <tr><td><b>仓储与交付</b></td><td>成品库存、发货计划、物流、随货资料、安装、验收、售后</td><td>发货→备货→质检放行→物流→签收→安装→验收</td><td>ERP、WMS、U9、客户门户</td></tr>
+            <tr><td><b>财务</b></td><td>预算、费用、报销、合同付款、发票、资金、成本、项目核算</td><td>预算→申请→审批→执行→核销；合同→付款→发票→入账</td><td>U9、ERP、银行/发票平台</td></tr>
+            <tr><td><b>人力资源</b></td><td>组织、入职、培训、岗位资格、排班、考勤、绩效、证照</td><td>招聘→入职→培训→资格→排班→绩效→离职</td><td>钉钉、考勤、U9</td></tr>
+            <tr><td><b>合同与法务</b></td><td>合同、相对方、印章、授权、诉讼、知识产权、合规证照</td><td>起草→评审→审批→签署→归档→履约→到期提醒</td><td>文档、电子签、U9</td></tr>
+            <tr><td><b>经营驾驶舱</b></td><td>目标、指标、会议、决议、行动项、风险、复盘</td><td>目标分解→周月复盘→问题升级→行动闭环→决策</td><td>全系统汇总</td></tr>
+            <tr><td><b>体系与知识</b></td><td>制度、SOP、记录、培训、审核、不符合、管理评审、知识</td><td>起草→评审→发布→培训→执行→审核→修订→作废</td><td>文档、培训、审计</td></tr>
+          </tbody>
+        </table></div>
+
+        <h2 class="md-h2" id="s-06-2">6.2 业务板块之间的主链条</h2>
+        <div class="layer-stack">
+          <div class="layer-row"><div class="layer-key" style="--lc:#1f5a96">需求到产品</div><div class="layer-val"><span class="chip">客户需求</span><span class="chip">研发项目</span><span class="chip">配方版本</span><span class="chip">实验</span><span class="chip">试产</span><span class="chip">转产</span></div></div>
+          <div class="layer-row"><div class="layer-key" style="--lc:#0f8ba5">计划到交付</div><div class="layer-val"><span class="chip">预测/订单</span><span class="chip">计划</span><span class="chip">采购</span><span class="chip">生产</span><span class="chip">质量</span><span class="chip">发货</span><span class="chip">验收</span></div></div>
+          <div class="layer-row"><div class="layer-key" style="--lc:#138a63">异常到改进</div><div class="layer-val"><span class="chip">发现异常</span><span class="chip">隔离</span><span class="chip">调查</span><span class="chip">处置</span><span class="chip">CAPA</span><span class="chip">效果验证</span><span class="chip">知识沉淀</span></div></div>
+          <div class="layer-row"><div class="layer-key" style="--lc:#e98514">合同到回款</div><div class="layer-val"><span class="chip">合同</span><span class="chip">订单</span><span class="chip">发货</span><span class="chip">开票</span><span class="chip">回款</span><span class="chip">对账</span><span class="chip">利润分析</span></div></div>
+          <div class="layer-row"><div class="layer-key" style="--lc:#7653b8">设备到质量</div><div class="layer-val"><span class="chip">设备台账</span><span class="chip">保养/校准</span><span class="chip">运行状态</span><span class="chip">工艺稳定性</span><span class="chip">质量趋势</span></div></div>
+        </div>
+
+        <h2 class="md-h2" id="s-06-3">6.3 哪类工作台由谁负责</h2>
+        <div class="table-wrap"><table>
+          <thead><tr><th>责任角色</th><th>关注结果</th><th>在AIDT中的主要动作</th></tr></thead>
+          <tbody>
+            <tr><td>部门负责人</td><td>本部门指标、流程效率、人员协同</td><td>选择模板、配置L2流程、查看看板、处理升级</td></tr>
+            <tr><td>流程负责人</td><td>端到端周期、返工率、异常闭环</td><td>定义指标、流程规则、SLA、跨部门接口</td></tr>
+            <tr><td>数据责任人</td><td>主数据质量、指标口径</td><td>审核字段、编码、映射、权限和数据质量</td></tr>
+            <tr><td>FDE</td><td>部门落地与采用率</td><td>业务梳理、配置、培训、问题闭环、能力包反馈</td></tr>
+            <tr><td>平台团队</td><td>稳定性、扩展性、安全与复用</td><td>内核、元模型、连接器、发布、监控和架构治理</td></tr>
+          </tbody>
+        </table></div>
+
+        <h2 class="md-h2" id="s-06-4">6.4 部门自助配置的边界</h2>
+        <div class="two-col">
+          <div class="callout ok"><div class="callout-title">部门可以自主</div><p>根据标准能力包调整表单字段、审批人、SLA、通知、岗位视图、部门看板和流程模板副本。</p></div>
+          <div class="callout risk"><div class="callout-title">部门不能自主</div><p>新建跨部门主对象、改变全局指标口径、开放跨系统写权限、启用高风险数字员工或绕过审计。</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="ch-07" data-cat="business" style="--cc:#138a63">
+      <div class="chapter-head">
+        <span class="chapter-badge">业务层 · 研发与实验室</span>
+        <h2 class="chapter-title"><span class="chapter-num">07</span> 研发、实验室与NPI</h2>
+        <p class="chapter-sub">需求到配方 · 实验到样品 · 试产到转产 · 知识可复用</p>
+      </div>
+      <div class="chapter-body">
+        <h1 class="md-h1">07 · 研发、实验室与NPI</h1>
+        <blockquote>研发场景不能只做“实验记录表”。核心是把客户需求、配方版本、原料、实验、测试、样品、试产和最终产品质量形成一条可追溯的证据链。</blockquote>
+
+        <h2 class="md-h2" id="s-07-1">7.1 研发核心对象</h2>
+        <div class="rule-grid">
+          <div class="rule-card"><b>研发项目</b><span>目标、客户需求、负责人、计划、阶段、预算和风险。</span></div>
+          <div class="rule-card"><b>配方版本</b><span>版本号、状态、组成、工艺条件、成本、关联实验和变更原因。</span></div>
+          <div class="rule-card"><b>实验单</b><span>目的、假设、变量、工艺、设备、原料、操作记录和异常。</span></div>
+          <div class="rule-card"><b>样品</b><span>唯一编号、来源、数量、状态、去向、客户反馈。</span></div>
+          <div class="rule-card"><b>测试结果</b><span>指标、方法、仪器、结果、判定、原始附件和审核。</span></div>
+          <div class="rule-card"><b>试产</b><span>放大条件、工单、批次、工艺偏差、质量和成本。</span></div>
+        </div>
+
+        <h2 class="md-h2" id="s-07-2">7.2 研发工作台功能清单</h2>
+        <div class="table-wrap"><table>
+          <thead><tr><th>模块</th><th>主要功能</th><th>关键规则</th></tr></thead>
+          <tbody>
+            <tr><td>需求与立项</td><td>客户样品需求、内部课题、立项审批、项目成员</td><td>客户需求转项目时保留原始要求与版本</td></tr>
+            <tr><td>配方管理</td><td>版本、组成、工艺条件、成本估算、变更对比、审批锁定</td><td>配方发布后禁止无审批覆盖；敏感字段单独授权</td></tr>
+            <tr><td>实验管理</td><td>计划、变量设计、领料、操作记录、异常、结果、结论</td><td>实验使用原料批次和设备状态必须可追溯</td></tr>
+            <tr><td>样品管理</td><td>申请、制备、库存、寄送、客户反馈、回收/销毁</td><td>一个样品唯一编号，关联实验、批次和客户</td></tr>
+            <tr><td>测试管理</td><td>测试申请、结果录入、仪器数据、复核、判定</td><td>原始记录不可覆盖；更正必须留痕</td></tr>
+            <tr><td>试产与转产</td><td>试产申请、生产协同、偏差、质量评价、成本、转产评审</td><td>阶段门未通过不得自动转生产主数据</td></tr>
+            <tr><td>知识沉淀</td><td>实验结论、失败经验、原料替代、问题库、检索</td><td>知识引用配方时继承同等权限</td></tr>
+          </tbody>
+        </table></div>
+
+        <h2 class="md-h2" id="s-07-3">7.3 样板流程：客户样品到研发转产</h2>
+        <div class="flow-strip">
+          <div class="flow-node" style="--fc:#1f5a96"><small>01 触发</small><b>客户样品需求</b><span>记录指标、交期、数量与保密等级</span></div><div class="flow-arrow">→</div>
+          <div class="flow-node" style="--fc:#0f8ba5"><small>02 判断</small><b>立项与项目经理</b><span>可行性、优先级、研发资源</span></div><div class="flow-arrow">→</div>
+          <div class="flow-node" style="--fc:#138a63"><small>03 设计</small><b>配方版本与实验计划</b><span>自动检查原料、设备、历史知识</span></div><div class="flow-arrow">→</div>
+          <div class="flow-node" style="--fc:#7653b8"><small>04 执行</small><b>实验与测试</b><span>异常自动升级，结果自动归档</span></div><div class="flow-arrow">→</div>
+          <div class="flow-node" style="--fc:#e98514"><small>05 决策</small><b>评审与试产</b><span>阶段门、成本、质量、风险</span></div><div class="flow-arrow">→</div>
+          <div class="flow-node" style="--fc:#c74242"><small>06 转产</small><b>生产主数据</b><span>审批后同步ERP/U9并冻结版本</span></div>
+        </div>
+
+        <h2 class="md-h2" id="s-07-4">7.4 与U9、ERP、DCS的协同</h2>
+        <div class="table-wrap"><table>
+          <thead><tr><th>节点</th><th>AIDT动作</th><th>外部系统协同</th></tr></thead>
+          <tbody>
+            <tr><td>立项</td><td>创建项目、需求、保密等级</td><td>提供客户的统一ID，读取订单与历史质量</td></tr>
+            <tr><td>配方估算</td><td>引用原料标准、计算试验成本</td><td>U9读取原料价格、库存与供应商</td></tr>
+            <tr><td>领料</td><td>实验领料申请、批次记录</td><td>ERP/WMS库存动作与回执</td></tr>
+            <tr><td>测试</td><td>结果、趋势、判定、异常</td><td>仪器文件或LIMS接口，DCS试产参数</td></tr>
+            <tr><td>试产</td><td>试产项目、质量评价、成本复盘</td><td>ERP工单与批次、DCS参数、U9成本</td></tr>
+            <tr><td>转产</td><td>产品、配方和工艺版本发布</td><td>审批后同步ERP物料/BOM与生产主数据</td></tr>
+          </tbody>
+        </table></div>
+
+        <h2 class="md-h2" id="s-07-5">7.5 数字员工可承担的研发任务</h2>
+        <div class="two-col">
+          <div class="info-card"><h4>低风险建议型</h4><ul><li>检索历史实验与相似配方</li><li>汇总客户需求与技术指标</li><li>生成实验周报和项目纪要</li><li>检查记录完整性</li></ul></div>
+          <div class="info-card"><h4>受控执行型</h4><ul><li>按模板生成测试申请</li><li>自动关联原料批次与检验结果</li><li>异常趋势预警</li><li>阶段门材料清单核对</li></ul></div>
+        </div>
+        <div class="callout risk"><div class="callout-title">研发AI的硬边界</div>不得自动修改已批准配方，不得未经授权检索其他项目配方，不得把涉密实验数据发送至公共模型。数字员工只读、建议和生成草稿，最终技术判断必须由具备资格的人签认。</div>
+      </div>
+    </section>
+
+    <section class="view" id="ch-08" data-cat="business" style="--cc:#138a63">
+      <div class="chapter-head">
+        <span class="chapter-badge">业务层 · 生产质量设备</span>
+        <h2 class="chapter-title"><span class="chapter-num">08</span> 生产、质量、设备与EHS</h2>
+        <p class="chapter-sub">工单到批次 · 异常到CAPA · 设备到稳定性 · 安全不交给AI</p>
+      </div>
+      <div class="chapter-body">
+        <h1 class="md-h1">08 · 生产、质量、设备与EHS</h1>
+        <blockquote>ERP管计划交易，DCS管实时控制，AIDT承担生产协同、批次追溯、异常闭环与质量证据。三者边界清晰，系统才能真正稳定。</blockquote>
+
+        <h2 class="md-h2" id="s-08-1">8.1 生产制造工作台</h2>
+        <div class="table-wrap"><table>
+          <thead><tr><th>模块</th><th>主要功能</th><th>关键协同</th></tr></thead>
+          <tbody>
+            <tr><td>生产计划与工单</td><td>计划接收、工单下达、排产、齐套检查、优先顺序</td><td>ERP计划与工单</td></tr>
+            <tr><td>批次执行</td><td>批次生成、配方版本、领料、投料、关键参数、报工、完工</td><td>DCS参数、WMS库存</td></tr>
+            <tr><td>班组工作台</td><td>任务、交接班、设备状态、异常上报、扫码确认</td><td>移动端/PDA/车间大屏</td></tr>
+            <tr><td>异常与停机</td><td>原因、影响、临时措施、恢复、责任人、复盘</td><td>设备、质量、EHS</td></tr>
+            <tr><td>返工与报废</td><td>申请、原因、审批、执行、数量与成本回写</td><td>ERP/U9</td></tr>
+            <tr><td>批次追溯</td><td>原料、设备、参数、人员、检验、放行、去向</td><td>全链条统一批次ID</td></tr>
+          </tbody>
+        </table></div>
+
+        <h2 class="md-h2" id="s-08-2">8.2 质量管理工作台</h2>
+        <div class="three-col">
+          <div class="info-card"><h4>检验</h4><p>来料、过程、成品、稳定性、复检、CoA、放行。</p></div>
+          <div class="info-card"><h4>异常</h4><p>不合格、偏差、OOS、客诉、隔离、调查和处置。</p></div>
+          <div class="info-card"><h4>改进</h4><p>根本原因、CAPA、变更控制、效果验证和知识沉淀。</p></div>
+        </div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>对象</th><th>必填证据</th><th>触发动作</th></tr></thead>
+          <tbody>
+            <tr><td>检验单</td><td>标准、方法、样本、仪器、结果、审核</td><td>不合格自动隔离并创建异常</td></tr>
+            <tr><td>偏差</td><td>发现时间、批次、影响范围、临时措施</td><td>根据风险等级通知质量负责人与生产负责人</td></tr>
+            <tr><td>CAPA</td><td>原因、措施、责任人、期限、验证结果</td><td>逾期升级；效果无效重新开启</td></tr>
+            <tr><td>客诉</td><td>客户、批次、样品、描述、影响、回复</td><td>关联同一批次的检验、原料和交付记录</td></tr>
+            <tr><td>变更控制</td><td>变更内容、风险、验证、批准、生效、回滚</td><td>影响配方、工艺、供应商和SOP时联动审批</td></tr>
+          </tbody>
+        </table></div>
+
+        <h2 class="md-h2" id="s-08-3">8.3 样板流程：批次异常闭环</h2>
+        <div class="flow-strip">
+          <div class="flow-node" style="--fc:#c74242"><small>01 事件</small><b>DCS报警</b><span>温度/压力/时间/设备状态越限</span></div><div class="flow-arrow">→</div>
+          <div class="flow-node" style="--fc:#e98514"><small>02 关联</small><b>批次与工单</b><span>匹配配方、设备、班次和原料</span></div><div class="flow-arrow">→</div>
+          <div class="flow-node" style="--fc:#138a63"><small>03 协同</small><b>创建异常任务</b><span>班组、工艺、质量同步响应</span></div><div class="flow-arrow">→</div>
+          <div class="flow-node" style="--fc:#1f5a96"><small>04 决策</small><b>继续/返工/报废</b><span>分级审批并记录依据</span></div><div class="flow-arrow">→</div>
+          <div class="flow-node" style="--fc:#7653b8"><small>05 改进</small><b>偏差与CAPA</b><span>根因、措施、效果验证</span></div><div class="flow-arrow">→</div>
+          <div class="flow-node" style="--fc:#0f8ba5"><small>06 回写</small><b>ERP/U9</b><span>报废、返工、库存与成本受控回写</span></div>
+        </div>
+        <div class="callout risk"><div class="callout-title">DCS安全边界</div>AIDT可接收报警、组织处置和保存证据，但绝不直接绕开DCS/PLC联锁，不自动向生产设备下发安全关键控制命令。</div>
+
+        <h2 class="md-h2" id="s-08-4">8.4 设备管理工作台</h2>
+        <div class="rule-grid">
+          <div class="rule-card"><b>设备台账</b><span>编码、位置、型号、能力、状态、责任人和关键备件。</span></div>
+          <div class="rule-card"><b>点检保养</b><span>计划、扫码、标准项、照片、异常、停机和验收。</span></div>
+          <div class="rule-card"><b>校准检定</b><span>周期、证书、误差、到期提醒、失效影响分析。</span></div>
+          <div class="rule-card"><b>维修备件</b><span>报修、派工、维修、用时、备件消耗、费用和质量影响。</span></div>
+          <div class="rule-card"><b>设备OEE</b><span>可用率、性能、良率、停机原因和改善跟踪。</span></div>
+          <div class="rule-card"><b>设备变更</b><span>技改、MOC、验证、人员培训和文件更新。</span></div>
+        </div>
+
+        <h2 class="md-h2" id="s-08-5">8.5 EHS工作台</h2>
+        <div class="two-col">
+          <div class="info-card"><h4>日常风险</h4><ul><li>隐患排查、整改、复查</li><li>作业许可、监护、关闭</li><li>危化品、废弃物、排放</li><li>应急物资、演练、培训</li></ul></div>
+          <div class="info-card"><h4>治理规则</h4><ul><li>高风险作业必须人工确认</li><li>AI只做法规检索、检查提醒和报告辅助</li><li>事故与险情按法定和安全制度管理</li><li>证据照片、时间、人员不可删除</li></ul></div>
+        </div>
+
+        <h2 class="md-h2" id="s-08-6">8.6 关键指标</h2>
+        <div class="rule-grid">
+          <div class="rule-card"><b>生产</b><span>计划达成率、批次收率、一次合格率、停机时长、返工率。</span></div>
+          <div class="rule-card"><b>质量</b><span>客诉率、偏差关闭周期、CAPA有效率、重复问题率。</span></div>
+          <div class="rule-card"><b>设备</b><span>OEE、非计划停机、保养及时率、校准到期率、维修MTTR。</span></div>
+          <div class="rule-card"><b>EHS</b><span>隐患关闭率、高风险作业合规率、培训完成率、事故/险情数。</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="ch-09" data-cat="business" style="--cc:#138a63">
+      <div class="chapter-head">
+        <span class="chapter-badge">业务层 · 供应链与交付</span>
+        <h2 class="chapter-title"><span class="chapter-num">09</span> 供应链、仓储、交付与客户</h2>
+        <p class="chapter-sub">预测到齐套 · 采购到付款 · 发货到验收 · 客诉到回访</p>
+      </div>
+      <div class="chapter-body">
+        <h1 class="md-h1">09 · 供应链、仓储、交付与客户</h1>
+        <blockquote>供应链的难点不是审批，而是计划、库存、供应商、质量和交付的实时协同。AIDT应围绕统一订单、物料、供应商、发货和客户对象构建端到端流程。</blockquote>
+
+        <h2 class="md-h2" id="s-09-1">9.1 计划与供应链工作台</h2>
+        <div class="table-wrap"><table>
+          <thead><tr><th>模块</th><th>功能</th><th>关键数据</th></tr></thead>
+          <tbody>
+            <tr><td>需求与S&OP</td><td>销售预测、历史消耗、产能、库存、供应风险、共识会议</td><td>订单、预测、产能、库存、采购提前期</td></tr>
+            <tr><td>MRP与齐套</td><td>物料需求、缺口、替代料、优先级、齐套日期</td><td>BOM、工单、在途、安全库存</td></tr>
+            <tr><td>请购采购</td><td>请购、询价、比价、合同、订单、变更、交期跟踪</td><td>供应商、价格、交期、质量历史</td></tr>
+            <tr><td>供应商</td><td>准入、资质、绩效、样品、审核、异常、淘汰</td><td>质量、交付、价格、合规证照</td></tr>
+            <tr><td>到货与检验</td><td>预约、收货、报检、结果、让步、退货、入库</td><td>采购单、批次、检验标准、CoA</td></tr>
+            <tr><td>库存协同</td><td>批次、有效期、库位、冻结、调拨、盘点、预警</td><td>WMS/ERP实时库存</td></tr>
+          </tbody>
+        </table></div>
+
+        <h2 class="md-h2" id="s-09-2">9.2 采购样板流程</h2>
+        <div class="flow-strip">
+          <div class="flow-node" style="--fc:#1f5a96"><small>01 需求</small><b>请购</b><span>项目、生产、研发或设备需求</span></div><div class="flow-arrow">→</div>
+          <div class="flow-node" style="--fc:#0f8ba5"><small>02 决策</small><b>预算与采购策略</b><span>库存、预算、供应商、单一来源判断</span></div><div class="flow-arrow">→</div>
+          <div class="flow-node" style="--fc:#138a63"><small>03 交易</small><b>合同/采购订单</b><span>法务、财务、供应链联合审批</span></div><div class="flow-arrow">→</div>
+          <div class="flow-node" style="--fc:#e98514"><small>04 到货</small><b>收货与检验</b><span>批次、COA、不合格隔离</span></div><div class="flow-arrow">→</div>
+          <div class="flow-node" style="--fc:#7653b8"><small>05 财务</small><b>发票与付款</b><span>三单匹配、预算、付款计划</span></div><div class="flow-arrow">→</div>
+          <div class="flow-node" style="--fc:#c74242"><small>06 评价</small><b>供应商绩效</b><span>质量、交付、价格、服务形成评分</span></div>
+        </div>
+
+        <h2 class="md-h2" id="s-09-3">9.3 仓储与交付工作台</h2>
+        <div class="three-col">
+          <div class="info-card"><h4>成品与发货</h4><p>库存可视、发货申请、批次指定、备货、复核、装车、物流跟踪。</p></div>
+          <div class="info-card"><h4>资料与签收</h4><p>CoA、SDS、装箱单、质检报告、电子签收、异常回执。</p></div>
+          <div class="info-card"><h4>交付验收</h4><p>安装调试、客户验收、遗留问题、售后交接和满意度。</p></div>
+        </div>
+        <div class="table-wrap"><table>
+          <thead><tr><th>对象</th><th>关键状态</th><th>自动触发</th></tr></thead>
+          <tbody>
+            <tr><td>发货计划</td><td>计划、备货、待检、可发、在途、签收</td><td>质量未放行自动阻断发货</td></tr>
+            <tr><td>物流单</td><td>待提货、运输、到达、异常、签收</td><td>延迟触发客服与销售提醒</td></tr>
+            <tr><td>验收单</td><td>待安装、调试、验收、整改、关闭</td><td>遗留问题自动创建售后任务</td></tr>
+            <tr><td>客户反馈</td><td>受理、调查、回复、关闭、回访</td><td>关联批次并触发质量客诉流程</td></tr>
+          </tbody>
+        </table></div>
+
+        <h2 class="md-h2" id="s-09-4">9.4 客户与销售工作台</h2>
+        <div class="rule-grid">
+          <div class="rule-card"><b>客户主档</b><span>客户、联系人、区域、行业、信用、项目和保密等级。</span></div>
+          <div class="rule-card"><b>商机报价</b><span>需求、竞争、报价、毛利、审批、版本和失效时间。</span></div>
+          <div class="rule-card"><b>样品申请</b><span>技术指标、数量、交期、研发评估和客户反馈。</span></div>
+          <div class="rule-card"><b>合同订单</b><span>合同评审、信用、价格、订单、变更、交付和回款。</span></div>
+          <div class="rule-card"><b>客诉售后</b><span>问题受理、批次追溯、调查、回复、改善和满意度。</span></div>
+          <div class="rule-card"><b>客户360</b><span>商机、订单、样品、交付、质量、回款和服务全景。</span></div>
+        </div>
+
+        <h2 class="md-h2" id="s-09-5">9.5 供应链与交付指标</h2>
+        <div class="two-col">
+          <div class="info-card"><h4>供应链</h4><ul><li>物料齐套率、采购准时率、库存周转、缺料停工次数</li><li>来料合格率、供应商交付率、采购周期、价格偏差</li></ul></div>
+          <div class="info-card"><h4>交付与客户</h4><ul><li>订单准时交付率、发货差错率、验收周期</li><li>客诉响应时间、关闭周期、客户满意度、回款周期</li></ul></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="ch-10" data-cat="business" style="--cc:#138a63">
+      <div class="chapter-head">
+        <span class="chapter-badge">业务层 · 经营管理</span>
+        <h2 class="chapter-title"><span class="chapter-num">10</span> 财务、人力、法务、项目与经营</h2>
+        <p class="chapter-sub">预算前置 · 合同履约 · 人才资格 · 项目阶段门 · 一屏经营</p>
+      </div>
+      <div class="chapter-body">
+        <h1 class="md-h1">10 · 财务、人力、法务、项目与经营</h1>
+        <blockquote>AIDT在经营管理域负责流程、预算前置控制、合同协同、项目闭环和指标汇总；U9仍是法定财务账，AIDT不重复建设总账系统。</blockquote>
+
+        <h2 class="md-h2" id="s-10-1">10.1 财务工作台</h2>
+        <div class="table-wrap"><table>
+          <thead><tr><th>模块</th><th>AIDT负责</th><th>U9/ERP负责</th></tr></thead>
+          <tbody>
+            <tr><td>预算</td><td>编制、申请、占用、调整、执行率和超预算审批</td><td>财务预算科目与账务核算</td></tr>
+            <tr><td>费用报销</td><td>申请、票据、审批、项目/部门归集、合规检查</td><td>凭证、应付、支付与总账</td></tr>
+            <tr><td>合同付款</td><td>合同节点、验收证据、发票匹配、付款申请与审批</td><td>供应商账、付款执行和凭证</td></tr>
+            <tr><td>项目核算</td><td>项目预算、工时、采购、费用、收入与分析</td><td>财务核算科目与凭证</td></tr>
+            <tr><td>应收应付</td><td>催办、对账协同、差异任务、客户/供应商沟通</td><td>应收应付余额与账龄</td></tr>
+            <tr><td>成本改善</td><td>分析任务、原因、措施、责任和效果验证</td><td>标准成本、实际成本与差异</td></tr>
+          </tbody>
+        </table></div>
+        <div class="callout warn"><div class="callout-title">财务AI原则</div>发票提取、合同比对、预算校验可以由数字员工完成；付款、入账、核销和财务判断必须由授权人员审批。AI不得成为财务权威账的最终写入者。</div>
+
+        <h2 class="md-h2" id="s-10-2">10.2 人力资源工作台</h2>
+        <div class="rule-grid">
+          <div class="rule-card"><b>组织岗位</b><span>组织、岗位、汇报关系、岗位职责与职务代理人。</span></div>
+          <div class="rule-card"><b>入职离职</b><span>资料、账号、设备、培训、交接和权限回收。</span></div>
+          <div class="rule-card"><b>培训资格</b><span>课程、考试、上岗资格、到期复审和岗位绑定。</span></div>
+          <div class="rule-card"><b>排班考勤</b><span>班组排班、请假、加班、考勤异常和工时归集。</span></div>
+          <div class="rule-card"><b>绩效改进</b><span>目标、评价、反馈、改进计划与结果。</span></div>
+          <div class="rule-card"><b>员工证照</b><span>特种作业、实验室资格、健康证和到期提醒。</span></div>
+        </div>
+        <p><b>关键约束：</b>薪资核算可保留在专业HR/财务系统；AIDT主要承载流程、资格、培训、工时归集和部门协同。</p>
+
+        <h2 class="md-h2" id="s-10-3">10.3 合同与法务工作台</h2>
+        <div class="flow-strip">
+          <div class="flow-node" style="--fc:#1f5a96"><small>01 起草</small><b>合同申请</b><span>模板、相对方、业务背景</span></div><div class="flow-arrow">→</div>
+          <div class="flow-node" style="--fc:#0f8ba5"><small>02 评审</small><b>商务/技术/财务/法务</b><span>条款风险与责任边界</span></div><div class="flow-arrow">→</div>
+          <div class="flow-node" style="--fc:#138a63"><small>03 签署</small><b>审批与电子签</b><span>版本锁定、签名意图</span></div><div class="flow-arrow">→</div>
+          <div class="flow-node" style="--fc:#e98514"><small>04 履约</small><b>里程碑与付款</b><span>交付、验收、开票、付款</span></div><div class="flow-arrow">→</div>
+          <div class="flow-node" style="--fc:#c74242"><small>05 风险</small><b>变更/违约/到期</b><span>自动提醒和责任任务</span></div><div class="flow-arrow">→</div>
+          <div class="flow-node" style="--fc:#7653b8"><small>06 归档</small><b>证据与复盘</b><span>合同全生命周期记录</span></div>
+        </div>
+
+        <h2 class="md-h2" id="s-10-4">10.4 项目与PMO工作台</h2>
+        <div class="table-wrap"><table>
+          <thead><tr><th>模块</th><th>关键内容</th><th>统一规则</th></tr></thead>
+          <tbody>
+            <tr><td>项目立项</td><td>目标、范围、价值、预算、负责人、阶段计划</td><td>所有项目必须有关联业务目标与收益假设</td></tr>
+            <tr><td>WBS与里程碑</td><td>任务、依赖、交付物、责任人、计划与实际</td><td>任务与会议行动项使用同一任务对象</td></tr>
+            <tr><td>阶段门</td><td>评审材料、评审人、结论、条件、放行</td><td>未通过不得进入下一阶段，例外需授权</td></tr>
+            <tr><td>风险与问题</td><td>等级、影响、概率、措施、责任人、关闭</td><td>重大风险自动升级到项目委员会</td></tr>
+            <tr><td>变更</td><td>范围、时间、成本、质量、风险影响</td><td>影响预算和合同需联动审批</td></tr>
+            <tr><td>验收复盘</td><td>验收证据、收益确认、问题、经验、知识</td><td>项目关闭后自动生成复盘与知识条目</td></tr>
+          </tbody>
+        </table></div>
+
+        <h2 class="md-h2" id="s-10-5">10.5 经营驾驶舱</h2>
+        <div class="three-col">
+          <div class="info-card"><h4>经营结果</h4><p>收入、毛利、现金流、订单、回款、库存、项目收益。</p></div>
+          <div class="info-card"><h4>运营效率</h4><p>交付、生产、质量、研发、采购、设备、流程周期。</p></div>
+          <div class="info-card"><h4>组织健康</h4><p>人才资格、培训、异常、风险、整改、数字员工采用率。</p></div>
+        </div>
+        <div class="callout"><div class="callout-title">驾驶舱不是一个“大屏项目”</div>它是指标口径、数据血缘、责任人和行动闭环的管理产品。每个异常指标都应可下钻到业务对象、责任任务和改善措施。</div>
+      </div>
+    </section>
+    <section class="view" id="ch-11" data-cat="process" style="--cc:#7653b8">
+      <div class="chapter-head">
+        <span class="chapter-badge">自动化层 · 流程编排</span>
+        <h2 class="chapter-title"><span class="chapter-num">11</span> 流程编排与四个样板流程</h2>
+        <p class="chapter-sub">事件—条件—动作 · 人机协同 · 版本治理 · 可回放可追溯</p>
+      </div>
+      <div class="chapter-body">
+        <h1 class="md-h1">11 · 流程编排与四个样板流程</h1>
+        <blockquote>流程设计器要隐藏技术复杂度，让业务负责人用“什么时候、满足什么条件、由谁做什么、失败怎么办”的方式定义流程，而不是直接画复杂BPMN。</blockquote>
+
+        <h2 class="md-h2" id="s-11-1">11.1 流程的五种基本元素</h2>
+        <div class="rule-grid">
+          <div class="rule-card"><b>触发事件</b><span>对象创建、状态变化、定时器、外部报警、人工发起。</span></div>
+          <div class="rule-card"><b>条件分支</b><span>字段、金额、风险、角色、库存、质量结果或组合规则。</span></div>
+          <div class="rule-card"><b>人工任务</b><span>审批、填写、确认、评审、签收、复核和整改。</span></div>
+          <div class="rule-card"><b>自动动作</b><span>通知、生成任务、调用接口、更新状态、生成文件。</span></div>
+          <div class="rule-card"><b>异常处理</b><span>超时、撤回、退回、失败重试、升级、补偿和人工接管。</span></div>
+          <div class="rule-card"><b>数字员工</b><span>提取、检索、比对、生成草稿、分析、建议或限额执行。</span></div>
+        </div>
+
+        <h2 class="md-h2" id="s-11-2">11.2 适合业务人员的流程表达</h2>
+        <div class="formula">
+          <span>当</span><code>实验完成</code><span>且</span><code>结果超出规格</code><span>时</span><code>创建异常</code><span>并</span><code>通知实验室负责人</code><span>，</span><code>要求在4小时内复核</code>
+        </div>
+        <p>平台内部仍可使用BPMN、规则引擎和事件总线，但业务界面应使用场景化表单和条件卡片，避免部门负责人直接接触技术协议、消息队列和数据库字段。</p>
+
+        <h2 class="md-h2" id="s-11-3">11.3 四个样板流程</h2>
+        <div class="flow-tabs" id="flowTabs">
+          <button class="flow-tab active" data-flow="rd">🧪 样品到转产</button>
+          <button class="flow-tab" data-flow="batch">⚠️ 批次异常闭环</button>
+          <button class="flow-tab" data-flow="p2p">🧾 采购到付款</button>
+          <button class="flow-tab" data-flow="complaint">📣 客诉到CAPA</button>
+        </div>
+
+        <div class="flow-panel active" data-panel="rd">
+          <h3 class="md-h3">样板A：客户样品需求 → 研发实验 → 试产 → 转产</h3>
+          <div class="flow-strip">
+            <div class="flow-node" style="--fc:#1f5a96"><small>销售</small><b>样品需求</b><span>客户指标、交期、数量、保密等级</span></div><div class="flow-arrow">→</div>
+            <div class="flow-node" style="--fc:#0f8ba5"><small>研发负责人</small><b>立项评审</b><span>技术可行、资源、优先级</span></div><div class="flow-arrow">→</div>
+            <div class="flow-node" style="--fc:#138a63"><small>研发工程师</small><b>配方与实验</b><span>版本、原料、设备、参数</span></div><div class="flow-arrow">→</div>
+            <div class="flow-node" style="--fc:#7653b8"><small>实验室</small><b>测试与判定</b><span>结果、异常、复核</span></div><div class="flow-arrow">→</div>
+            <div class="flow-node" style="--fc:#e98514"><small>项目组</small><b>试产评审</b><span>质量、成本、工艺、风险</span></div><div class="flow-arrow">→</div>
+            <div class="flow-node" style="--fc:#c74242"><small>授权人</small><b>转产发布</b><span>冻结配方、同步主数据</span></div>
+          </div>
+          <div class="two-col">
+            <div class="info-card"><h4>自动动作</h4><ul><li>查询历史相似实验与原料库存</li><li>实验完成自动通知测试负责人</li><li>超规格自动创建异常</li><li>阶段门材料缺失自动阻断</li></ul></div>
+            <div class="info-card"><h4>关键证据</h4><ul><li>客户原始需求与技术确认版本</li><li>配方版本、实验记录、原始数据</li><li>样品去向与客户反馈</li><li>试产、质量评价与转产审批</li></ul></div>
+          </div>
+        </div>
+
+        <div class="flow-panel" data-panel="batch">
+          <h3 class="md-h3">样板B：DCS越限 → 批次异常 → 处置 → CAPA</h3>
+          <div class="flow-strip">
+            <div class="flow-node" style="--fc:#c74242"><small>DCS</small><b>越限事件</b><span>参数、设备、时间、批次</span></div><div class="flow-arrow">→</div>
+            <div class="flow-node" style="--fc:#e98514"><small>AIDT规则</small><b>风险判定</b><span>关联工单、配方、原料、人员</span></div><div class="flow-arrow">→</div>
+            <div class="flow-node" style="--fc:#138a63"><small>班组</small><b>现场确认</b><span>临时措施、照片、影响范围</span></div><div class="flow-arrow">→</div>
+            <div class="flow-node" style="--fc:#1f5a96"><small>工艺/质量</small><b>联合评审</b><span>继续、降级、返工或报废</span></div><div class="flow-arrow">→</div>
+            <div class="flow-node" style="--fc:#7653b8"><small>质量</small><b>偏差/CAPA</b><span>根因、措施、效果验证</span></div><div class="flow-arrow">→</div>
+            <div class="flow-node" style="--fc:#0f8ba5"><small>ERP/U9</small><b>受控回写</b><span>库存、成本、批次状态</span></div>
+          </div>
+          <div class="callout risk"><div class="callout-title">不得自动化</div>不得让数字员工直接修改DCS控制参数、绕过联锁或替代现场安全确认。AI可以汇总报警和提出处置建议，处置结论由授权人员签认。</div>
+        </div>
+
+        <div class="flow-panel" data-panel="p2p">
+          <h3 class="md-h3">样板C：请购 → 采购 → 到货检验 → 发票付款</h3>
+          <div class="flow-strip">
+            <div class="flow-node" style="--fc:#1f5a96"><small>需求部门</small><b>请购</b><span>物料、数量、预算、需求日期</span></div><div class="flow-arrow">→</div>
+            <div class="flow-node" style="--fc:#0f8ba5"><small>供应链/财务</small><b>预算与策略</b><span>库存、预算、供应商、采购方式</span></div><div class="flow-arrow">→</div>
+            <div class="flow-node" style="--fc:#138a63"><small>采购/法务</small><b>合同与订单</b><span>价格、条款、交付、质量</span></div><div class="flow-arrow">→</div>
+            <div class="flow-node" style="--fc:#e98514"><small>仓库/质量</small><b>到货检验</b><span>批次、COA、合格/隔离</span></div><div class="flow-arrow">→</div>
+            <div class="flow-node" style="--fc:#7653b8"><small>财务</small><b>三单匹配</b><span>订单、验收、发票</span></div><div class="flow-arrow">→</div>
+            <div class="flow-node" style="--fc:#c74242"><small>授权人</small><b>付款与评价</b><span>资金计划、供应商绩效</span></div>
+          </div>
+        </div>
+
+        <div class="flow-panel" data-panel="complaint">
+          <h3 class="md-h3">样板D：客户投诉 → 批次追溯 → 处置 → 改进回访</h3>
+          <div class="flow-strip">
+            <div class="flow-node" style="--fc:#1f5a96"><small>销售/客服</small><b>受理客诉</b><span>客户、批次、样品、问题描述</span></div><div class="flow-arrow">→</div>
+            <div class="flow-node" style="--fc:#0f8ba5"><small>AIDT</small><b>批次追溯</b><span>原料、参数、检验、发货、同批去向</span></div><div class="flow-arrow">→</div>
+            <div class="flow-node" style="--fc:#138a63"><small>质量/研发</small><b>联合调查</b><span>复现、原因、影响范围</span></div><div class="flow-arrow">→</div>
+            <div class="flow-node" style="--fc:#e98514"><small>处置组</small><b>客户方案</b><span>退换、筛选、驻场、技术方案</span></div><div class="flow-arrow">→</div>
+            <div class="flow-node" style="--fc:#7653b8"><small>责任部门</small><b>CAPA</b><span>纠正、预防、体系更新</span></div><div class="flow-arrow">→</div>
+            <div class="flow-node" style="--fc:#c74242"><small>销售/质量</small><b>回访关闭</b><span>客户确认、满意度、知识沉淀</span></div>
+          </div>
+        </div>
+
+        <h2 class="md-h2" id="s-11-4">11.4 流程配置界面应具备什么</h2>
+        <div class="table-wrap"><table>
+          <thead><tr><th>设计区</th><th>业务人员看到什么</th><th>系统后台保证什么</th></tr></thead>
+          <tbody>
+            <tr><td>触发</td><td>当哪个对象发生什么变化，或到了什么时间</td><td>事件订阅、定时器、幂等和去重</td></tr>
+            <tr><td>条件</td><td>字段、角色、金额、风险、质量结果</td><td>决策表、版本化和优先级</td></tr>
+            <tr><td>节点</td><td>谁来确认、审批、复核、签署</td><td>组织解析、代理人、会签和权限校验</td></tr>
+            <tr><td>自动动作</td><td>通知谁、创建什么、调用哪个接口</td><td>重试、超时、补偿和死信队列</td></tr>
+            <tr><td>异常</td><td>超时找谁、失败怎么办、谁可接管</td><td>升级、人工兜底和运行日志</td></tr>
+            <tr><td>发布</td><td>测试、影响范围、版本说明</td><td>沙箱、依赖检查、回滚和审计</td></tr>
+          </tbody>
+        </table></div>
+
+        <h2 class="md-h2" id="s-11-5">11.5 防止流程失控</h2>
+        <ol class="number-list">
+          <li><b>流程只引用主对象：</b>不允许每个流程重新创建一套客户、物料或批次数据。</li>
+          <li><b>跨部门流程由流程负责人统一维护：</b>部门只能复制模板，不得擅自修改公共主流程。</li>
+          <li><b>设置事件风暴保护：</b>相同事件合并、循环检测、频率限制和异常告警。</li>
+          <li><b>所有自动写操作可回放：</b>记录触发事件、规则版本、审批人、接口回执和补偿结果。</li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="view" id="ch-12" data-cat="process" style="--cc:#7653b8">
+      <div class="chapter-head">
+        <span class="chapter-badge">自动化层 · 集成与数据</span>
+        <h2 class="chapter-title"><span class="chapter-num">12</span> U9、ERP、DCS 集成与数据底座</h2>
+        <p class="chapter-sub">接口产品化 · 事件驱动 · 主数据统一 · 湖仓与时序分层</p>
+      </div>
+      <div class="chapter-body">
+        <h1 class="md-h1">12 · U9、ERP、DCS 集成与数据底座</h1>
+        <blockquote>不要让每个部门需求都变成一个新的接口开发项目。把认证、映射、重试、监控、对账和版本做成统一连接器产品，业务只配置“用哪个连接器、映射哪些字段、何时触发”。</blockquote>
+
+        <h2 class="md-h2" id="s-12-1">12.1 集成总图</h2>
+        <div class="integration-map">
+          <div class="system-stack">
+            <div class="system-node">U9 · 财务账 / 成本 / 库存</div>
+            <div class="system-node">ERP · 订单 / 计划 / 工单</div>
+            <div class="system-node">DCS · 参数 / 报警 / 设备</div>
+          </div>
+          <div>
+            <div class="integration-links">⇄</div>
+            <div class="integration-core"><b>AIDT 集成层</b><span>API Gateway · Event Bus · CDC/ETL · Edge Gateway</span><span>统一身份 · 字段映射 · 重试 · 对账 · 审计</span></div>
+            <div class="integration-links">⇄</div>
+            <div class="system-stack" style="margin-top:5px">
+              <div class="system-node">钉钉 · 身份 / 待办 / 移动审批</div>
+              <div class="system-node">WMS / LIMS / 仪器 / 客户门户</div>
+            </div>
+          </div>
+          <div class="system-stack">
+            <div class="system-node">业务对象与流程</div>
+            <div class="system-node">事件与证据账本</div>
+            <div class="system-node">湖仓 / 时序 / 知识</div>
+          </div>
+        </div>
+
+        <h2 class="md-h2" id="s-12-2">12.2 三种接口形态</h2>
+        <div class="three-col">
+          <div class="info-card"><h4>查询接口</h4><p>读取客户、物料、库存、订单、工单、财务和分析数据。必须支持分页、增量、权限和来源标识。</p></div>
+          <div class="info-card"><h4>命令接口</h4><p>执行受控业务动作，例如下单、领料、报工、入库和付款申请。必须具备幂等和审批凭证。</p></div>
+          <div class="info-card"><h4>事件接口</h4><p>状态变化主动推送，例如工单完成、DCS报警、库存冻结、订单变更和质量放行。</p></div>
+        </div>
+
+        <h2 class="md-h2" id="s-12-3">12.3 分系统接入建议</h2>
+        <div class="table-wrap"><table>
+          <thead><tr><th>系统</th><th>推荐方式</th><th>边界</th></tr></thead>
+          <tbody>
+            <tr><td><b>U9</b></td><td>官方API/Web Service为主；批量分析通过只读副本或CDC形成镜像；写回走受控命令</td><td>禁止长期直写U9业务库；接口不可用时通过任务补偿和人工对账</td></tr>
+            <tr><td><b>ERP</b></td><td>对象API + 事件订阅；主数据通过统一ID映射；订单、工单、库存、发货按业务命令交互</td><td>保留ERP对交易最终状态的校验权</td></tr>
+            <tr><td><b>DCS</b></td><td>边缘网关接入OPC UA/MQTT；报警和关键参数摘要进入事件与时序库</td><td>只读优先；不得替代PLC/联锁和安全控制</td></tr>
+            <tr><td><b>钉钉</b></td><td>OAuth/OIDC单点、组织同步、待办与消息、移动审批状态回传</td><td>钉钉不保存业务权威状态</td></tr>
+            <tr><td><b>WMS/LIMS</b></td><td>按库存动作、样本、检验和仪器结果建立领域连接器</td><td>原始仪器记录按专业系统法规与质量要求保留</td></tr>
+            <tr><td><b>文件/邮件</b></td><td>附件、发票、客户邮件、报告自动归档与OCR</td><td>敏感内容需要数据分级、病毒扫描和访问审计</td></tr>
+          </tbody>
+        </table></div>
+
+        <h2 class="md-h2" id="s-12-4">12.4 连接器必须具备的产品能力</h2>
+        <div class="rule-grid">
+          <div class="rule-card"><b>认证与授权</b><span>密钥、证书、令牌、最小权限和定期轮换。</span></div>
+          <div class="rule-card"><b>Schema映射</b><span>字段、编码、单位、日期、枚举和主数据校验。</span></div>
+          <div class="rule-card"><b>幂等控制</b><span>同一业务命令重复提交不得重复下单、领料或付款。</span></div>
+          <div class="rule-card"><b>可靠性</b><span>超时、重试、熔断、死信队列和人工补偿。</span></div>
+          <div class="rule-card"><b>可观察性</b><span>调用量、延迟、失败率、积压和业务异常告警。</span></div>
+          <div class="rule-card"><b>对账</b><span>逐日/按批次比对AIDT与源系统数量、状态和金额。</span></div>
+        </div>
+
+        <h2 class="md-h2" id="s-12-5">12.5 数据底座五区</h2>
+        <div class="table-wrap"><table>
+          <thead><tr><th>数据区</th><th>内容</th><th>典型技术形态</th></tr></thead>
+          <tbody>
+            <tr><td>业务交易区</td><td>项目、任务、实验、批次、质量、合同、流程实例</td><td>关系型数据库</td></tr>
+            <tr><td>主数据区</td><td>客户、供应商、物料、产品、设备、组织、人员</td><td>MDM/主数据注册表 + 唯一ID</td></tr>
+            <tr><td>事件与证据区</td><td>业务事件、审批、签名、附件、AI执行、接口回执</td><td>事件存储、审计库、对象存储</td></tr>
+            <tr><td>时序与物联区</td><td>DCS参数、设备状态、能耗、报警</td><td>时序数据库 / 工业历史库</td></tr>
+            <tr><td>分析湖仓区</td><td>ODS、标准层、指标层、历史数据、检索语料</td><td>湖仓、列式分析库、搜索引擎</td></tr>
+          </tbody>
+        </table></div>
+        <div class="callout warn"><div class="callout-title">不要把DCS高频数据塞进业务表</div>高频参数进入时序库并配置保留策略；AIDT业务库只保存批次摘要、关键工艺节点、报警事件和人工处置结果。</div>
+
+        <h2 class="md-h2" id="s-12-6">12.6 统一主数据与指标口径</h2>
+        <div class="two-col">
+          <div class="info-card"><h4>必须统一的ID</h4><ul><li>客户、供应商、物料、产品、设备</li><li>项目、实验、工单、批次、样品</li><li>员工、组织、岗位、成本中心</li><li>合同、订单、发货、发票</li></ul></div>
+          <div class="info-card"><h4>必须统一的指标</h4><ul><li>一次合格率、批次收率、OEE</li><li>订单准时交付率、采购准时率</li><li>库存周转率、实验按期完成率</li><li>客诉关闭周期、项目阶段门通过率</li></ul></div>
+        </div>
+        <p>每个指标都应登记定义、公式、数据来源、责任人、刷新频率和适用范围。严禁同一指标在不同部门拥有不同公式却使用同名。</p>
+      </div>
+    </section>
+
+    <section class="view" id="ch-13" data-cat="automation" style="--cc:#7653b8">
+      <div class="chapter-head">
+        <span class="chapter-badge">自动化层 · 数字员工</span>
+        <h2 class="chapter-title"><span class="chapter-num">13</span> 数字员工与智能自动化</h2>
+        <p class="chapter-sub">独立身份 · 能力授权 · A0—A4执行等级 · 人机审批 · 全程审计</p>
+      </div>
+      <div class="chapter-body">
+        <h1 class="md-h1">13 · 数字员工与智能自动化</h1>
+        <blockquote>数字员工不是“共用人类账号的机器人”。它应当是独立身份、独立权限、独立预算、独立审计，并通过能力授权参与流程的企业执行主体。</blockquote>
+
+        <h2 class="md-h2" id="s-13-1">13.1 数字员工身份档案</h2>
+        <div class="table-wrap"><table>
+          <thead><tr><th>档案项</th><th>内容</th><th>控制目的</th></tr></thead>
+          <tbody>
+            <tr><td>身份</td><td>名称、编号、所属部门、业务负责人、技术负责人</td><td>明确谁创建、谁使用、谁负责</td></tr>
+            <tr><td>岗位与技能</td><td>可调用的Skill、MCP、模型、工具和文档库</td><td>限制能力范围</td></tr>
+            <tr><td>数据范围</td><td>组织、项目、客户、配方、质量、财务字段</td><td>最小权限和敏感隔离</td></tr>
+            <tr><td>可执行动作</td><td>读取、生成草稿、创建任务、提交申请、写回接口</td><td>区分只读与执行权限</td></tr>
+            <tr><td>审批边界</td><td>金额、数量、风险、场景和人工确认点</td><td>防止越权与不可逆操作</td></tr>
+            <tr><td>运行触发</td><td>手动、事件、定时、消息、API</td><td>控制调用频率和业务时机</td></tr>
+            <tr><td>运行记录</td><td>输入、工具、模型、输出、审批、回执、成本</td><td>可追溯、可评测、可回滚</td></tr>
+            <tr><td>停止开关</td><td>负责人、熔断条件、紧急停用</td><td>出现异常时可立即隔离</td></tr>
+          </tbody>
+        </table></div>
+
+        <h2 class="md-h2" id="s-13-2">13.2 A0—A4 执行等级</h2>
+        <div class="table-wrap"><table>
+          <thead><tr><th>等级</th><th>执行方式</th><th>典型场景</th><th>人机边界</th></tr></thead>
+          <tbody>
+            <tr><td><b>A0</b> 建议</td><td>只分析、检索、判断和生成建议</td><td>配方方向建议、质量根因、经营分析</td><td>所有决定由人做出</td></tr>
+            <tr><td><b>A1</b> 草稿</td><td>生成报告、邮件、表单草稿</td><td>周报、会议纪要、客户回复草稿</td><td>发送或提交前人工确认</td></tr>
+            <tr><td><b>A2</b> 执行后通知</td><td>创建任务、发送提醒、生成报表</td><td>资料缺失提醒、异常任务、日报</td><td>可逆动作，无需逐次审批</td></tr>
+            <tr><td><b>A3</b> 限额执行</td><td>在金额、数量和规则范围内自动执行</td><td>小额采购建议、常规库存调整、标准审批</td><td>超限、异常或高风险转人工</td></tr>
+            <tr><td><b>A4</b> 自动闭环</td><td>低风险、可逆、非安全关键流程全自动</td><td>数据同步、标准对账、提醒闭环</td><td>必须可监控、可补偿、可一键停止</td></tr>
+          </tbody>
+        </table></div>
+        <div class="callout risk"><div class="callout-title">不建议直接进入A4的场景</div>财务付款、质量放行、配方变更、安全联锁、高风险EHS作业、对外合同承诺、客户重大赔付。这些场景应长期保留明确的人工签认。</div>
+
+        <h2 class="md-h2" id="s-13-3">13.3 事件与定时任务</h2>
+        <div class="two-col">
+          <div class="info-card"><h4>事件型</h4><ul><li>实验完成自动生成周报素材</li><li>DCS报警自动关联批次</li><li>发票到达自动做三单匹配</li><li>客诉受理自动检索同批记录</li></ul></div>
+          <div class="info-card"><h4>定时型</h4><ul><li>每日数据对账和异常清单</li><li>每周项目风险与延期扫描</li><li>设备校准和合同到期提醒</li><li>经营日报/周报自动生成</li></ul></div>
+        </div>
+
+        <h2 class="md-h2" id="s-13-4">13.4 数字员工进入审批流的方式</h2>
+        <div class="flow-strip">
+          <div class="flow-node" style="--fc:#1f5a96"><small>01</small><b>业务发起</b><span>人工或事件启动任务</span></div><div class="flow-arrow">→</div>
+          <div class="flow-node" style="--fc:#0f8ba5"><small>02</small><b>权限校验</b><span>身份、数据范围、动作限额</span></div><div class="flow-arrow">→</div>
+          <div class="flow-node" style="--fc:#7653b8"><small>03</small><b>数字员工执行</b><span>技能调用、结果生成、来源引用</span></div><div class="flow-arrow">→</div>
+          <div class="flow-node" style="--fc:#e98514"><small>04</small><b>人工确认</b><span>关键动作、异常或超限</span></div><div class="flow-arrow">→</div>
+          <div class="flow-node" style="--fc:#138a63"><small>05</small><b>系统执行</b><span>受控命令接口与回执</span></div><div class="flow-arrow">→</div>
+          <div class="flow-node" style="--fc:#c74242"><small>06</small><b>审计与评测</b><span>日志、准确性、成本、投诉</span></div>
+        </div>
+
+        <h2 class="md-h2" id="s-13-5">13.5 典型数字员工</h2>
+        <div class="table-wrap"><table>
+          <thead><tr><th>数字员工</th><th>服务对象</th><th>可做</th><th>不可做</th></tr></thead>
+          <tbody>
+            <tr><td>研发资料助理</td><td>研发/实验室</td><td>检索历史实验、整理资料、检查记录、生成周报</td><td>修改批准配方、跨项目查看涉密数据</td></tr>
+            <tr><td>批次异常分析员</td><td>生产/质量</td><td>汇总报警、关联批次、提出可能原因、生成调查草稿</td><td>直接控制DCS、判定放行、关闭偏差</td></tr>
+            <tr><td>采购对账员</td><td>供应链/财务</td><td>订单/验收/发票比对、缺口提示、供应商资料核验</td><td>自动付款、绕过预算和合同审批</td></tr>
+            <tr><td>交付资料助理</td><td>交付/客服</td><td>生成随货资料清单、检查完整性和客户回复草稿</td><td>未经审核对外承诺</td></tr>
+            <tr><td>经营分析员</td><td>管理层</td><td>汇总指标、解释波动、生成会议材料</td><td>改变指标口径、掩盖异常</td></tr>
+          </tbody>
+        </table></div>
+
+        <h2 class="md-h2" id="s-13-6">13.6 数字员工运营</h2>
+        <div class="rule-grid">
+          <div class="rule-card"><b>版本</b><span>技能提示词、工具和模型配置均版本化。</span></div>
+          <div class="rule-card"><b>评测</b><span>上线前用标准题集和真实脱敏样例测试。</span></div>
+          <div class="rule-card"><b>成本</b><span>按部门、流程和数字员工统计调用费用。</span></div>
+          <div class="rule-card"><b>质量</b><span>记录人工采纳率、返工率、错误和投诉。</span></div>
+          <div class="rule-card"><b>权限复审</b><span>定期回收不再需要的工具、数据和接口权限。</span></div>
+          <div class="rule-card"><b>退役</b><span>停用后保留必要审计记录和可追溯结果。</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="ch-14" data-cat="governance" style="--cc:#c74242">
+      <div class="chapter-head">
+        <span class="chapter-badge">治理层 · 落地路线</span>
+        <h2 class="chapter-title"><span class="chapter-num">14</span> 组织治理、FDE 与实施路线</h2>
+        <p class="chapter-sub">平台团队 · 领域产品 · FDE落地 · 三阶段样板 · 六类指标</p>
+      </div>
+      <div class="chapter-body">
+        <h1 class="md-h1">14 · 组织治理、FDE 与实施路线</h1>
+        <blockquote>FDE不应变成“驻场写定制代码”的外包队。FDE的价值是把业务问题转化为标准对象、能力包、流程模板和数据规则，并推动部门真正使用。</blockquote>
+
+        <h2 class="md-h2" id="s-14-1">14.1 角色与职责</h2>
+        <div class="table-wrap"><table>
+          <thead><tr><th>角色</th><th>主要职责</th><th>不负责</th></tr></thead>
+          <tbody>
+            <tr><td>平台核心团队</td><td>元模型、身份权限、流程引擎、连接器、数据底座、安全与运维</td><td>替每个部门写专属业务后台</td></tr>
+            <tr><td>领域产品经理</td><td>研发、生产、质量、供应链等能力包规划与标准模板</td><td>被动接收部门零散页面需求</td></tr>
+            <tr><td>FDE</td><td>业务梳理、能力包配置、数据映射、培训、采用和问题闭环</td><td>绕开平台建设私有代码</td></tr>
+            <tr><td>流程负责人</td><td>端到端流程设计、指标、SLA和持续改善</td><td>只做节点审批的“流程管理员”</td></tr>
+            <tr><td>数据责任人</td><td>主数据、字段、编码、权限和指标口径</td><td>把口径争议留给报表开发</td></tr>
+            <tr><td>安全与审计</td><td>生产关键系统、数据分级、AI权限、电子证据和抽查</td><td>等出事后补制度</td></tr>
+          </tbody>
+        </table></div>
+
+        <h2 class="md-h2" id="s-14-2">14.2 FDE团队工作模型</h2>
+        <div class="fde-grid">
+          <div class="fde-card"><b>01 发现</b><span>业务痛点、流程、角色、数据、系统和非功能要求。</span></div>
+          <div class="fde-card"><b>02 建模</b><span>对象、状态、动作、规则、指标与权限边界。</span></div>
+          <div class="fde-card"><b>03 配置</b><span>基于标准能力包组合表单、流程、视图和看板。</span></div>
+          <div class="fde-card"><b>04 集成</b><span>选择连接器、映射字段、验证回执和对账。</span></div>
+          <div class="fde-card"><b>05 试点</b><span>小范围真实数据试运行，记录问题和采用率。</span></div>
+          <div class="fde-card"><b>06 运营</b><span>培训、监控、复盘、复用推广和需求回流。</span></div>
+        </div>
+
+        <h2 class="md-h2" id="s-14-3">14.3 三阶段建设路线</h2>
+        <div class="roadmap">
+          <div class="road-step"><b>阶段一：打地基与三个样板 · 0—3个月</b><span>确定系统和数据边界；完成统一身份、对象、表单、流程、任务、审计；完成样品到转产、批次异常、采购到付款三个跨系统样板。</span></div>
+          <div class="road-step"><b>阶段二：业务能力包推广 · 3—9个月</b><span>上线研发实验、生产质量、供应链、交付、设备EHS、合同财务等项目；建立指标口径、数据对账和部门运营机制。</span></div>
+          <div class="road-step"><b>阶段三：数字员工规模化 · 9—18个月</b><span>事件与定时自动化、技能库、数字员工审批、经营分析、异常预警和持续优化；形成可复制的多组织能力。</span></div>
+        </div>
+
+        <h2 class="md-h2" id="s-14-4">14.4 前90天必须交付</h2>
+        <div class="two-col">
+          <div class="info-card"><h4>架构与治理</h4><ul><li>系统数据权威矩阵</li><li>统一主数据与业务ID规则</li><li>元模型第一版</li><li>权限与数字员工授权规范</li><li>U9/ERP/DCS接口可行性报告</li></ul></div>
+          <div class="info-card"><h4>业务与产品</h4><ul><li>全量能力地图</li><li>13个工作台菜单草案</li><li>通用能力包与领域包清单</li><li>3个样板流程可运行</li><li>部门采用率和问题闭环看板</li></ul></div>
+        </div>
+
+        <h2 class="md-h2" id="s-14-5">14.5 项目验收指标</h2>
+        <div class="table-wrap"><table>
+          <thead><tr><th>维度</th><th>指标</th><th>建议目标</th></tr></thead>
+          <tbody>
+            <tr><td>复用</td><td>标准能力复用率 / 部门定制后端数量</td><td>不低于80% / 接近0</td></tr>
+            <tr><td>效率</td><td>流程平均周期、人工触点、重复录入次数</td><td>按流程建立基线并持续下降</td></tr>
+            <tr><td>质量</td><td>数据差异率、接口失败率、重复问题率</td><td>可监控、可对账、逐月改善</td></tr>
+            <tr><td>采用</td><td>目标用户周活跃率、流程线上完成率</td><td>先试点部门达80%，再推广</td></tr>
+            <tr><td>自动化</td><td>数字员工覆盖率、采纳率、单任务成本</td><td>按场景分级设定，不追求虚假全自动</td></tr>
+            <tr><td>治理</td><td>审计完整率、越权事件、未登记数字员工</td><td>审计完整率100%，高风险事件为零</td></tr>
+          </tbody>
+        </table></div>
+
+        <h2 class="md-h2" id="s-14-6">14.6 管理层需要拍板的十件事</h2>
+        <ol class="number-list">
+          <li>U9、ERP、DCS和AIDT的数据权威边界。</li>
+          <li>AIDT是否承担轻量MES/LIMS/QMS职责，以及相应SLA。</li>
+          <li>平台核心团队、领域产品团队与FDE的组织归属。</li>
+          <li>哪些部门先试点，哪些功能只建设不启用。</li>
+          <li>主数据和指标口径的最终责任人。</li>
+          <li>数字员工独立身份、授权和预算机制。</li>
+          <li>跨系统写回必须经过哪些审批。</li>
+          <li>生产关键系统的备份、恢复和应急预案。</li>
+          <li>配方、客户、成本等核心商密的访问和模型路由规则。</li>
+          <li>项目按“页面数量”还是按“流程闭环与业务指标”验收。</li>
+        </ol>
+
+        <h2 class="md-h2" id="s-14-7">14.7 最终建议</h2>
+        <div class="callout ok"><div class="callout-title">建议董事会批准的建设命题</div>
+          用12—18个月，建设一套以AIDT为统一业务数据面和流程执行面的企业业务操作系统；先以三个跨系统样板验证对象模型、能力复用、接口治理和数字员工边界，再向研发、生产、质量、供应链、交付和经营管理逐步推广。评价项目成功的标准不是“做了多少个页面”，而是“多少流程真正闭环、多少能力被复用、多少数据自动一致、多少人员稳定使用”。
+        </div>
+        <div class="confidential">保密提示：本 HTML 可能包含公司系统边界、业务对象、流程和指标体系。对外分享前应完成敏感信息审查；配方、客户、成本、工艺参数和接口密钥不得进入演示样例或公共模型。</div>
+      </div>
+    </section>
+
+    <div id="summaryView" class="summaryView hidden"></div>
+    <button class="back-top" id="backTop" title="回到顶部">↑</button>
+  </main>
+</div>
+
+<script>
+const NAV = [
+  {
+    id:"ch-01", num:"01", title:"战略判断与设计边界", layer:"战略层", color:"#1f5a96", cat:"strategy",
+    subs:[["s-01-1","原方案中正确的判断"],["s-01-2","必须纠正的四个误区"],["s-01-3","批准与拒绝"],["s-01-4","成功标准"]]
+  },
+  {
+    id:"ch-02", num:"02", title:"数据归属与系统边界", layer:"战略层", color:"#1f5a96", cat:"strategy",
+    subs:[["s-02-1","四类数据归属"],["s-02-2","系统权责矩阵"],["s-02-3","读写权限"],["s-02-5","统一业务关联链"]]
+  },
+  {
+    id:"ch-03", num:"03", title:"产品结构与体验门户", layer:"战略层", color:"#1f5a96", cat:"strategy",
+    subs:[["s-03-1","三套产品族"],["s-03-2","三类使用形态"],["s-03-3","信息架构"],["s-03-4","产品边界"]]
+  },
+  {
+    id:"ch-04", num:"04", title:"平台元模型与配置边界", layer:"平台层", color:"#0f8ba5", cat:"platform",
+    subs:[["s-04-1","元模型清单"],["s-04-2","L1—L4配置分级"],["s-04-3","业务运行五步法"],["s-04-5","配置边界"]]
+  },
+  {
+    id:"ch-05", num:"05", title:"通用能力库", layer:"平台层", color:"#0f8ba5", cat:"platform",
+    subs:[["s-05-1","20项横向能力"],["s-05-2","领域能力包"],["s-05-3","能力包清单"],["s-05-4","业务视角"]]
+  },
+  {
+    id:"ch-06", num:"06", title:"全量业务板块总图", layer:"业务层", color:"#138a63", cat:"business",
+    subs:[["s-06-1","业务板块全景"],["s-06-2","板块主链条"],["s-06-3","责任角色"],["s-06-4","自助配置边界"]]
+  },
+  {
+    id:"ch-07", num:"07", title:"研发、实验室与NPI", layer:"业务层", color:"#138a63", cat:"business",
+    subs:[["s-07-1","研发核心对象"],["s-07-2","工作台功能"],["s-07-3","样品到转产"],["s-07-4","系统协同"],["s-07-5","数字员工"]]
+  },
+  {
+    id:"ch-08", num:"08", title:"生产、质量、设备与EHS", layer:"业务层", color:"#138a63", cat:"business",
+    subs:[["s-08-1","生产制造"],["s-08-2","质量管理"],["s-08-3","批次异常闭环"],["s-08-4","设备管理"],["s-08-5","EHS"]]
+  },
+  {
+    id:"ch-09", num:"09", title:"供应链、仓储、交付与客户", layer:"业务层", color:"#138a63", cat:"business",
+    subs:[["s-09-1","计划与供应链"],["s-09-2","采购样板流程"],["s-09-3","仓储与交付"],["s-09-4","客户与销售"]]
+  },
+  {
+    id:"ch-10", num:"10", title:"财务、人力、法务、项目与经营", layer:"业务层", color:"#138a63", cat:"business",
+    subs:[["s-10-1","财务工作台"],["s-10-2","人力资源"],["s-10-3","合同与法务"],["s-10-4","项目与PMO"],["s-10-5","经营驾驶舱"]]
+  },
+  {
+    id:"ch-11", num:"11", title:"流程编排与样板流程", layer:"自动化层", color:"#7653b8", cat:"process",
+    subs:[["s-11-1","五种基本元素"],["s-11-2","业务化表达"],["s-11-3","四个样板流程"],["s-11-4","配置界面"],["s-11-5","防止流程失控"]]
+  },
+  {
+    id:"ch-12", num:"12", title:"U9、ERP、DCS集成与数据底座", layer:"自动化层", color:"#7653b8", cat:"process",
+    subs:[["s-12-1","集成总图"],["s-12-2","三种接口形态"],["s-12-3","分系统接入"],["s-12-5","数据底座五区"],["s-12-6","主数据与指标"]]
+  },
+  {
+    id:"ch-13", num:"13", title:"数字员工与智能自动化", layer:"自动化层", color:"#7653b8", cat:"automation",
+    subs:[["s-13-1","数字员工身份"],["s-13-2","A0—A4执行等级"],["s-13-3","事件与定时任务"],["s-13-4","参与审批"],["s-13-5","典型数字员工"]]
+  },
+  {
+    id:"ch-14", num:"14", title:"组织治理、FDE与实施路线", layer:"治理层", color:"#c74242", cat:"governance",
+    subs:[["s-14-1","角色与职责"],["s-14-2","FDE工作模型"],["s-14-3","三阶段路线"],["s-14-4","前90天交付"],["s-14-5","验收指标"],["s-14-6","需要拍板的事项"]]
+  }
+];
+
+const CATEGORY_INFO = {
+  strategy:{icon:"🧭", label:"战略与边界", desc:"董事会判断、数据归属、产品结构与系统边界"},
+  platform:{icon:"🧱", label:"平台与能力", desc:"平台元模型、配置分级、通用能力库和领域能力包"},
+  business:{icon:"🏭", label:"业务板块", desc:"研发、实验室、生产、质量、供应链、交付、财务、人力与经营"},
+  process:{icon:"🔗", label:"流程与集成", desc:"流程编排、样板流程、U9/ERP/DCS接口与数据底座"},
+  automation:{icon:"🤖", label:"智能自动化", desc:"数字员工身份、执行等级、事件触发和智能审批"},
+  governance:{icon:"🛡️", label:"治理与落地", desc:"FDE、组织治理、实施路线、验收指标与决策清单"}
+};
+
+let currentView = "home";
+let searchIndex = null;
+const mainEl = document.getElementById("main");
+const treeEl = document.getElementById("tree");
+const summaryView = document.getElementById("summaryView");
+const searchInput = document.getElementById("searchInput");
+const searchResults = document.getElementById("searchResults");
+
+function escHtml(s){
+  return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+function escAttr(s){
+  return String(s == null ? "" : s).replace(/&/g,"&amp;").replace(/"/g,"&quot;").replace(/</g,"&lt;");
+}
+
+function buildTree(){
+  const groups = [];
+  NAV.forEach(item => {
+    let group = groups.find(g => g.layer === item.layer);
+    if(!group){
+      group = {layer:item.layer,color:item.color,items:[]};
+      groups.push(group);
+    }
+    group.items.push(item);
+  });
+  treeEl.innerHTML = groups.map(group => `
+    <div class="tree-group">
+      <div class="tree-layer" style="--lc:${group.color}">
+        <span class="tree-layer-dot"></span>
+        <span class="tree-layer-name">${escHtml(group.layer)}</span>
+        <span class="tree-layer-count">${group.items.length}章</span>
+        <span class="tw">▾</span>
+      </div>
+      <ul class="tree-chapters">
+        ${group.items.map(item => `
+          <li class="tree-chapter">
+            <div class="tree-ch" data-ch="${item.id}" style="--lc:${item.color}">
+              <span class="tw">▸</span>
+              <span class="tree-ch-num">${item.num}</span>
+              <span class="tree-ch-t">${escHtml(item.title)}</span>
+            </div>
+            <ul class="tree-sections">
+              ${item.subs.map(([id,title]) => `<li class="tree-sub" data-ch="${item.id}" data-sec="${id}" style="--lc:${item.color}">${escHtml(title)}</li>`).join("")}
+            </ul>
+          </li>
+        `).join("")}
+      </ul>
+    </div>
+  `).join("");
+}
+
+function closeMobileSidebar(){
+  if(window.innerWidth <= 900) document.body.classList.add("side-collapsed");
+}
+function updateActiveNav(chId, secId){
+  document.querySelectorAll(".tree-ch").forEach(el => el.classList.toggle("active", el.dataset.ch === chId && !secId));
+  document.querySelectorAll(".tree-sub").forEach(el => el.classList.toggle("active", el.dataset.ch === chId && el.dataset.sec === secId));
+  if(chId && chId !== "home"){
+    const row = document.querySelector(`.tree-ch[data-ch="${chId}"]`);
+    const chapter = row ? row.closest(".tree-chapter") : null;
+    if(chapter){
+      chapter.classList.add("open");
+      const tw = row.querySelector(".tw");
+      if(tw) tw.textContent = "▾";
+    }
+  }
+}
+function hideAllViews(){
+  document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+  summaryView.classList.add("hidden");
+  summaryView.innerHTML = "";
+}
+function scrollToAnchor(anchorId){
+  if(!anchorId) return;
+  const target = document.getElementById(anchorId);
+  if(!target) return;
+  requestAnimationFrame(() => {
+    const top = target.offsetTop - parseInt(getComputedStyle(document.documentElement).getPropertyValue("--topbar-h")) - 18;
+    mainEl.scrollTo({top:Math.max(0,top), behavior:"smooth"});
+  });
+}
+function showChapter(id, secId){
+  const target = document.getElementById(id);
+  if(!target) return;
+  hideAllViews();
+  target.classList.add("active");
+  currentView = id;
+  updateActiveNav(id, secId || "");
+  mainEl.scrollTo({top:0,behavior:"auto"});
+  if(secId) setTimeout(() => scrollToAnchor(secId), 40);
+  document.getElementById("catFilter").value = "";
+  closeMobileSidebar();
+  try{history.replaceState(null,"", "#" + id + (secId ? "/" + secId : ""));}catch(e){}
+}
+function showHome(){
+  hideAllViews();
+  document.getElementById("home").classList.add("active");
+  currentView = "home";
+  updateActiveNav("", "");
+  mainEl.scrollTo({top:0,behavior:"auto"});
+  document.getElementById("catFilter").value = "";
+  closeMobileSidebar();
+  try{history.replaceState(null,"", location.pathname + location.search);}catch(e){}
+}
+
+function showSummary(cat){
+  const info = CATEGORY_INFO[cat];
+  if(!info){ showHome(); return; }
+  hideAllViews();
+  const items = NAV.filter(n => n.cat === cat);
+  currentView = "summary";
+  updateActiveNav("", "");
+  summaryView.innerHTML = `
+    <div class="summary-intro">
+      <div class="summary-ic">${info.icon}</div>
+      <div class="summary-txt"><b>${escHtml(info.label)}</b><span>${escHtml(info.desc)}</span></div>
+      <button class="btn-back" id="btnBackSummary">↩ 返回总览</button>
+    </div>
+    <div class="summary-grid">
+      ${items.map(n => `
+        <div class="summary-card" data-go="${n.id}">
+          <div class="mini">${n.num} · ${escHtml(n.layer)}</div>
+          <b>${escHtml(n.title)}</b>
+          <p>${escHtml(n.subs.map(x => x[1]).slice(0,3).join(" · "))}</p>
+        </div>
+      `).join("")}
+    </div>`;
+  summaryView.classList.remove("hidden");
+  mainEl.scrollTo({top:0,behavior:"auto"});
+  closeMobileSidebar();
+}
+
+treeEl.addEventListener("click", (e) => {
+  const layer = e.target.closest(".tree-layer");
+  const sub = e.target.closest(".tree-sub");
+  const chapter = e.target.closest(".tree-ch");
+  if(layer){
+    const group = layer.closest(".tree-group");
+    group.classList.toggle("collapsed");
+    const tw = layer.querySelector(".tw");
+    if(tw) tw.textContent = group.classList.contains("collapsed") ? "▸" : "▾";
+    return;
+  }
+  if(sub){
+    showChapter(sub.dataset.ch, sub.dataset.sec);
+    return;
+  }
+  if(chapter){
+    const li = chapter.closest(".tree-chapter");
+    li.classList.toggle("open");
+    const tw = chapter.querySelector(".tw");
+    if(tw) tw.textContent = li.classList.contains("open") ? "▾" : "▸";
+    showChapter(chapter.dataset.ch);
+  }
+});
+
+function collapseAll(){
+  document.querySelectorAll(".tree-group").forEach(g => g.classList.add("collapsed"));
+  document.querySelectorAll(".tree-layer .tw").forEach(t => t.textContent = "▸");
+  document.querySelectorAll(".tree-chapter").forEach(c => c.classList.remove("open"));
+  document.querySelectorAll(".tree-ch .tw").forEach(t => t.textContent = "▸");
+}
+function expandAll(){
+  document.querySelectorAll(".tree-group").forEach(g => g.classList.remove("collapsed"));
+  document.querySelectorAll(".tree-layer .tw").forEach(t => t.textContent = "▾");
+  document.querySelectorAll(".tree-chapter").forEach(c => c.classList.add("open"));
+  document.querySelectorAll(".tree-ch .tw").forEach(t => t.textContent = "▾");
+}
+document.getElementById("btnHome").addEventListener("click", showHome);
+document.getElementById("btnCollapseAll").addEventListener("click", collapseAll);
+document.getElementById("btnExpandAll").addEventListener("click", expandAll);
+document.getElementById("btnSidebar").addEventListener("click", () => document.body.classList.toggle("side-collapsed"));
+document.getElementById("sidebarScrim").addEventListener("click", () => document.body.classList.add("side-collapsed"));
+document.getElementById("backTop").addEventListener("click", () => mainEl.scrollTo({top:0,behavior:"smooth"}));
+mainEl.addEventListener("scroll", () => {
+  document.getElementById("backTop").classList.toggle("show", mainEl.scrollTop > 520);
+});
+
+document.addEventListener("click", (e) => {
+  const go = e.target.closest("[data-go]");
+  if(go) showChapter(go.dataset.go);
+  if(e.target.closest("#btnBackSummary")) showHome();
+  if(!e.target.closest(".search-wrap")) searchResults.classList.add("hidden");
+});
+document.getElementById("catFilter").addEventListener("change", (e) => {
+  if(e.target.value) showSummary(e.target.value); else showHome();
+});
+
+/* 样板流程切换 */
+document.getElementById("flowTabs").addEventListener("click", (e) => {
+  const tab = e.target.closest(".flow-tab");
+  if(!tab) return;
+  document.querySelectorAll("#flowTabs .flow-tab").forEach(b => b.classList.toggle("active", b === tab));
+  document.querySelectorAll(".flow-panel").forEach(p => p.classList.toggle("active", p.dataset.panel === tab.dataset.flow));
+});
+
+/* 全文检索 */
+function buildSearchIndex(){
+  if(searchIndex) return searchIndex;
+  searchIndex = [];
+  NAV.forEach(ch => {
+    const root = document.getElementById(ch.id);
+    if(!root) return;
+    ch.subs.forEach(([id,title]) => {
+      const h = document.getElementById(id);
+      if(!h) return;
+      let text = title + " ";
+      let node = h.nextElementSibling;
+      while(node && !node.matches("h2.md-h2,h3.md-h3")){
+        text += node.textContent + " ";
+        node = node.nextElementSibling;
+      }
+      searchIndex.push({
+        chId:ch.id, chLabel:ch.num + " · " + ch.title, secId:id,
+        title, text:text.replace(/\s+/g," ").trim()
+      });
+    });
+  });
+  return searchIndex;
+}
+function snippet(text,q){
+  const idx = text.toLowerCase().indexOf(q.toLowerCase());
+  const start = Math.max(0, idx - 26);
+  const end = Math.min(text.length, idx + q.length + 56);
+  return (start > 0 ? "…" : "") + text.slice(start,end) + (end < text.length ? "…" : "");
+}
+let searchTimer;
+searchInput.addEventListener("input", () => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(doSearch, 140);
+});
+searchInput.addEventListener("keydown", e => {
+  if(e.key === "Enter"){
+    const first = searchResults.querySelector(".sr-item");
+    if(first) first.click();
+  }
+});
+function doSearch(){
+  const q = searchInput.value.trim();
+  if(!q){ searchResults.classList.add("hidden"); return; }
+  const hits = buildSearchIndex()
+    .filter(x => (x.title + " " + x.text).toLowerCase().includes(q.toLowerCase()))
+    .slice(0,40);
+  searchResults.innerHTML = hits.length
+    ? hits.map(h => `
+        <div class="sr-item" data-sr-ch="${h.chId}" data-sr-sec="${h.secId}" data-q="${escAttr(q)}">
+          <div class="sr-ch">${escHtml(h.chLabel)}</div>
+          <div class="sr-title">${escHtml(h.title)}</div>
+          <div class="sr-snip">${escHtml(snippet(h.text,q))}</div>
+        </div>`).join("")
+    : `<div class="sr-empty">未找到「${escHtml(q)}」相关内容</div>`;
+  searchResults.classList.remove("hidden");
+}
+function clearMarks(){
+  document.querySelectorAll("mark.hl").forEach(m => {
+    const p = m.parentNode;
+    if(!p) return;
+    p.replaceChild(document.createTextNode(m.textContent),m);
+    p.normalize();
+  });
+}
+function highlightIn(rootId,q){
+  clearMarks();
+  const anchor = document.getElementById(rootId);
+  const root = anchor ? (anchor.closest(".view") || anchor) : null;
+  if(!root || !q) return;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode(node){
+      const p = node.parentElement;
+      if(!p || !node.nodeValue.trim()) return NodeFilter.FILTER_REJECT;
+      if(p.closest("script,style,button,input,select,mark")) return NodeFilter.FILTER_REJECT;
+      return NodeFilter.FILTER_ACCEPT;
+    }
+  });
+  const nodes = [];
+  while(walker.nextNode()) nodes.push(walker.currentNode);
+  const ql = q.toLowerCase();
+  nodes.forEach(node => {
+    const text = node.nodeValue;
+    const lower = text.toLowerCase();
+    let idx = lower.indexOf(ql);
+    if(idx < 0) return;
+    const frag = document.createDocumentFragment();
+    let pos = 0;
+    while(idx >= 0){
+      if(idx > pos) frag.appendChild(document.createTextNode(text.slice(pos,idx)));
+      const m = document.createElement("mark");
+      m.className = "hl";
+      m.textContent = text.slice(idx,idx+q.length);
+      frag.appendChild(m);
+      pos = idx + q.length;
+      idx = lower.indexOf(ql,pos);
+    }
+    if(pos < text.length) frag.appendChild(document.createTextNode(text.slice(pos)));
+    node.parentNode.replaceChild(frag,node);
+  });
+}
+searchResults.addEventListener("click", e => {
+  const item = e.target.closest(".sr-item");
+  if(!item) return;
+  const ch = item.dataset.srCh, sec = item.dataset.srSec, q = item.dataset.q;
+  showChapter(ch,sec);
+  searchResults.classList.add("hidden");
+  setTimeout(() => {
+    highlightIn(sec,q);
+    const first = document.querySelector("mark.hl");
+    if(first){
+      first.scrollIntoView({block:"center",behavior:"smooth"});
+      first.classList.add("search-flash");
+      setTimeout(() => first.classList.remove("search-flash"),1500);
+    }
+  },240);
+});
+
+/* 打印 */
+document.getElementById("btnPrintCh").addEventListener("click", () => {
+  if(currentView === "home" || currentView === "summary"){
+    alert("请先选择一个具体章节再打印。");
+    return;
+  }
+  document.body.classList.remove("printing-all");
+  window.print();
+});
+document.getElementById("btnPrintAll").addEventListener("click", () => {
+  const was = currentView;
+  document.body.classList.add("printing-all");
+  window.print();
+  setTimeout(() => {
+    document.body.classList.remove("printing-all");
+  },500);
+});
+
+/* 主题 */
+document.getElementById("btnTheme").addEventListener("click", () => {
+  const dark = document.body.classList.toggle("dark");
+  try{localStorage.setItem("aidt-theme",dark ? "dark" : "light");}catch(e){}
+});
+try{
+  if(localStorage.getItem("aidt-theme") === "dark") document.body.classList.add("dark");
+}catch(e){}
+
+/* 键盘 */
+document.addEventListener("keydown", e => {
+  if((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k"){
+    e.preventDefault();
+    searchInput.focus();
+  }
+  if(e.key === "/" && !/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)){
+    e.preventDefault();
+    searchInput.focus();
+  }
+  if(e.key === "Escape"){
+    searchResults.classList.add("hidden");
+    searchInput.blur();
+  }
+});
+
+/* 初始化 */
+window.addEventListener("DOMContentLoaded", () => {
+  buildTree();
+  expandAll();
+  updateActiveNav("", "");
+  if(window.innerWidth <= 900) document.body.classList.add("side-collapsed");
+  const hash = decodeURIComponent(location.hash.slice(1));
+  if(hash){
+    const [id,sec] = hash.split("/");
+    if(document.getElementById(id)) showChapter(id,sec || "");
+    else showHome();
+  } else {
+    showHome();
+  }
+});
+</script>
+</body>
+</html>

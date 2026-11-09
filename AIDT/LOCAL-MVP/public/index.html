@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="color-scheme" content="light">
+  <title>AIDT 本地验证版 · 企业业务操作系统</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <button class="icon-btn mobile-only" id="sidebarToggle" aria-label="打开导航">☰</button>
+    <a class="brand" href="#dashboard" data-view-link="dashboard">
+      <span class="brand-mark">A</span>
+      <span class="brand-copy">
+        <strong>AIDT <em>LOCAL</em></strong>
+        <small>企业业务操作系统 · 纵向验证版</small>
+      </span>
+    </a>
+    <div class="workspace-pill">
+      <span class="pulse-dot"></span>
+      <span>广东普赛达 · 研发生产业</span>
+    </div>
+    <div class="topbar-spacer"></div>
+    <div class="mode-chip" title="当前不连接真实U9、ERP、DCS或外部模型">本地原型模式</div>
+    <button class="top-action" id="btnResetDemo" title="重置全部演示数据">↺ 重置演示</button>
+    <div class="user-chip">
+      <span class="avatar">管</span>
+      <span>系统管理员</span>
+    </div>
+  </header>
+
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-scroll">
+        <div class="nav-section-label">工作台</div>
+        <nav class="nav-list" id="mainNav">
+          <button class="nav-item active" data-view="dashboard">
+            <span class="nav-icon">◫</span><span>总览驾驶舱</span><span class="nav-count" id="navTaskCount">0</span>
+          </button>
+          <button class="nav-item" data-view="workbench">
+            <span class="nav-icon">☑</span><span>我的待办</span><span class="nav-alert" id="navOverdue">0</span>
+          </button>
+          <button class="nav-item" data-view="processes">
+            <span class="nav-icon">⇄</span><span>流程中心</span>
+          </button>
+          <button class="nav-item" data-view="objects">
+            <span class="nav-icon">◇</span><span>对象与能力</span>
+          </button>
+        </nav>
+        <div class="nav-section-label">智能与连接</div>
+        <nav class="nav-list">
+          <button class="nav-item" data-view="agents">
+            <span class="nav-icon">◎</span><span>数字员工</span>
+          </button>
+          <button class="nav-item" data-view="connectors">
+            <span class="nav-icon">⇌</span><span>系统连接器</span>
+          </button>
+          <button class="nav-item" data-view="audit">
+            <span class="nav-icon">◷</span><span>审计与证据</span>
+          </button>
+        </nav>
+      </div>
+      <div class="sidebar-foot">
+        <div class="prototype-note">
+          <span class="prototype-badge">可弃型纵向样板</span>
+          <p>用于验证对象、流程、任务、审批、审计和数字员工边界，不代表正式技术栈。</p>
+        </div>
+        <div class="service-status">
+          <span class="pulse-dot"></span>
+          <div><strong>本地服务正常</strong><small id="serviceTime">正在检测…</small></div>
+        </div>
+      </div>
+    </aside>
+
+    <div class="scrim" id="scrim"></div>
+
+    <main class="main" id="mainContent">
+      <div class="global-banner">
+        <strong>DEMO ONLY</strong>
+        <span>当前数据、连接器和数字员工运行结果均为本地模拟。没有连接真实U9、ERP、DCS，也没有向外部发送任何消息。</span>
+      </div>
+
+      <section class="view active" data-view-panel="dashboard">
+        <div class="page-head">
+          <div>
+            <span class="eyebrow">OPERATIONS OVERVIEW</span>
+            <h1>总览驾驶舱</h1>
+            <p>从一个入口看清流程、待办、异常、数字员工和系统连接状态。</p>
+          </div>
+          <div class="head-actions">
+            <button class="btn btn-ghost" id="refreshDashboard">↻ 刷新数据</button>
+            <button class="btn btn-primary" data-launch-process>＋ 发起流程</button>
+          </div>
+        </div>
+
+        <div class="hero-strip">
+          <div class="hero-copy">
+            <span class="hero-tag">AIDT CORE OS · VERTICAL SLICE</span>
+            <h2>对象是骨，流程是神经，<br><em>数字员工</em>是执行者。</h2>
+            <p>本版本不追求页面数量，只验证一条跨部门流程能否从数据产生走到审批、条件跳转、审计和智能辅助。</p>
+            <div class="hero-actions">
+              <button class="btn btn-light" data-launch-process>发起一个新流程</button>
+              <button class="btn btn-outline-light" data-go="processes">查看流程态势 →</button>
+            </div>
+          </div>
+          <div class="hero-visual" aria-hidden="true">
+            <div class="orbit orbit-1"></div>
+            <div class="orbit orbit-2"></div>
+            <div class="core-node">AIDT</div>
+            <span class="satellite sat-1">对象</span>
+            <span class="satellite sat-2">流程</span>
+            <span class="satellite sat-3">数据</span>
+            <span class="satellite sat-4">AI</span>
+          </div>
+        </div>
+
+        <div class="kpi-grid" id="kpiGrid"></div>
+
+        <div class="dashboard-grid">
+          <section class="card card-wide">
+            <div class="card-head">
+              <div><span class="card-kicker">TODAY</span><h3>重点待办</h3></div>
+              <button class="text-btn" data-go="workbench">查看全部 →</button>
+            </div>
+            <div id="dashboardTasks" class="task-mini-list"></div>
+          </section>
+          <section class="card">
+            <div class="card-head">
+              <div><span class="card-kicker">FLOW HEALTH</span><h3>流程态势</h3></div>
+            </div>
+            <div id="domainBars" class="bar-list"></div>
+          </section>
+          <section class="card">
+            <div class="card-head">
+              <div><span class="card-kicker">AUTOMATION</span><h3>数字员工</h3></div>
+              <button class="text-btn" data-go="agents">查看目录 →</button>
+            </div>
+            <div id="agentSnapshot" class="agent-snapshot"></div>
+          </section>
+          <section class="card card-wide">
+            <div class="card-head">
+              <div><span class="card-kicker">EVIDENCE STREAM</span><h3>近期审计事件</h3></div>
+              <button class="text-btn" data-go="audit">查看审计 →</button>
+            </div>
+            <div id="recentAudit" class="audit-mini-list"></div>
+          </section>
+        </div>
+      </section>
+
+      <section class="view" data-view-panel="workbench">
+        <div class="page-head">
+          <div>
+            <span class="eyebrow">HUMAN IN THE LOOP</span>
+            <h1>我的待办</h1>
+            <p>所有事项都能回到业务对象、流程实例和审计证据。</p>
+          </div>
+          <div class="head-actions">
+            <button class="btn btn-ghost" id="refreshTasks">↻ 刷新</button>
+            <button class="btn btn-primary" data-launch-process>＋ 发起流程</button>
+          </div>
+        </div>
+        <div class="filter-bar">
+          <div class="segmented" id="taskFilters">
+            <button class="active" data-task-filter="pending">待处理</button>
+            <button data-task-filter="completed">已处理</button>
+            <button data-task-filter="all">全部</button>
+          </div>
+          <div class="filter-hint">处理动作会真实推进本地 SQLite 流程实例</div>
+        </div>
+        <div id="taskList" class="task-list"></div>
+      </section>
+
+      <section class="view" data-view-panel="processes">
+        <div class="page-head">
+          <div>
+            <span class="eyebrow">PROCESS ORCHESTRATION</span>
+            <h1>流程中心</h1>
+            <p>流程模板、运行实例和条件节点统一管理，部门配置基于标准能力而非新写后端。</p>
+          </div>
+          <div class="head-actions">
+            <button class="btn btn-primary" data-launch-process>＋ 发起流程</button>
+          </div>
+        </div>
+        <div class="section-title-row">
+          <div><span class="section-kicker">INSTANCES</span><h2>运行中的流程</h2></div>
+          <span class="hint-chip">按优先级和更新时间排序</span>
+        </div>
+        <div id="instanceGrid" class="instance-grid"></div>
+
+        <div class="section-title-row section-gap">
+          <div><span class="section-kicker">TEMPLATES</span><h2>标准流程模板</h2></div>
+          <span class="hint-chip">条件节点已在本地规则引擎生效</span>
+        </div>
+        <div id="workflowGrid" class="workflow-grid"></div>
+      </section>
+
+      <section class="view" data-view-panel="objects">
+        <div class="page-head">
+          <div>
+            <span class="eyebrow">METADATA & CAPABILITY</span>
+            <h1>对象与能力</h1>
+            <p>先定义业务对象和状态，再由流程组合动作。这里是减少部门定制后端的关键层。</p>
+          </div>
+          <div class="head-actions">
+            <span class="config-chip">L3 · 元模型只读演示</span>
+          </div>
+        </div>
+        <div class="object-intro">
+          <div class="object-formula">
+            <span>业务对象</span><b>→</b><span>状态机</span><b>→</b><span>业务事件</span><b>→</b><span>流程与技能</span>
+          </div>
+          <p>对象模型不绑定具体页面，也不绑定最终技术栈；未来可映射到 Java、.NET、企业低代码平台或BPM引擎。</p>
+        </div>
+        <div id="objectGrid" class="object-grid"></div>
+      </section>
+
+      <section class="view" data-view-panel="agents">
+        <div class="page-head">
+          <div>
+            <span class="eyebrow">DIGITAL WORKFORCE</span>
+            <h1>数字员工</h1>
+            <p>独立身份、明确等级、能力范围、人工确认和运行审计，不允许共用真人账号。</p>
+          </div>
+          <div class="head-actions">
+            <span class="config-chip">本地规则模拟 · 不调用大模型</span>
+          </div>
+        </div>
+        <div class="agent-level-guide">
+          <span><b>A0</b> 只建议</span>
+          <span><b>A1</b> 生成草稿</span>
+          <span><b>A2</b> 执行后通知</span>
+          <span><b>A3</b> 限额执行</span>
+          <span><b>A4</b> 低风险闭环</span>
+        </div>
+        <div id="agentGrid" class="agent-grid"></div>
+      </section>
+
+      <section class="view" data-view-panel="connectors">
+        <div class="page-head">
+          <div>
+            <span class="eyebrow">INTEGRATION CONTRACTS</span>
+            <h1>系统连接器</h1>
+            <p>当前全部为 mock provider。正式接口未拿到前，不制造“已打通”的假象。</p>
+          </div>
+          <div class="head-actions">
+            <span class="config-chip">Mock Provider · 零真实写回</span>
+          </div>
+        </div>
+        <div class="connector-architecture">
+          <div class="connector-systems">
+            <span>U9</span><span>ERP</span><span>DCS</span><span>钉钉</span>
+          </div>
+          <div class="connector-arrow">⇄</div>
+          <div class="connector-core">AIDT 集成边界<br><small>API · Event · Edge Gateway</small></div>
+          <div class="connector-arrow">⇄</div>
+          <div class="connector-targets">
+            <span>对象</span><span>流程</span><span>审计</span><span>数字员工</span>
+          </div>
+        </div>
+        <div id="connectorGrid" class="connector-grid"></div>
+      </section>
+
+      <section class="view" data-view-panel="audit">
+        <div class="page-head">
+          <div>
+            <span class="eyebrow">AUDIT TRAIL</span>
+            <h1>审计与证据</h1>
+            <p>流程、任务和数字员工的每个关键动作都写入不可静默跳过的本地证据流。</p>
+          </div>
+          <div class="head-actions">
+            <button class="btn btn-ghost" id="refreshAudit">↻ 刷新审计</button>
+          </div>
+        </div>
+        <div class="audit-summary">
+          <div><span>审计事件</span><b id="auditCount">0</b></div>
+          <div><span>可追溯对象</span><b id="auditEntityCount">0</b></div>
+          <div><span>证据范围</span><b>本地 SQLite</b></div>
+        </div>
+        <div id="auditList" class="audit-list"></div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal-backdrop" id="modalBackdrop" hidden>
+    <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <button class="modal-close" id="modalClose" aria-label="关闭">×</button>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <div class="toast-stack" id="toastStack" aria-live="polite"></div>
+  <div class="loading-screen" id="loadingScreen">
+    <div class="loading-mark">A</div>
+    <strong>正在装配 AIDT 本地验证环境</strong>
+    <span>读取对象、流程、待办和审计数据…</span>
+  </div>
+
+  <script src="/app.js" defer></script>
+</body>
+</html>

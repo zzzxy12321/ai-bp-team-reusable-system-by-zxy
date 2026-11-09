@@ -1,0 +1,17 @@
+# Local runtime artifacts
+AIDT/LOCAL-MVP/data/*.db
+AIDT/LOCAL-MVP/data/*.db-*
+AIDT/LOCAL-MVP/.aidt.pid
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+appsettings.Local.json
+*.pfx
+*.snk
+
+# Logs and operating-system files
+*.log
+Thumbs.db
+.DS_Store
