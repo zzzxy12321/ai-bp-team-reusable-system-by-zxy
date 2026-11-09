@@ -10,6 +10,8 @@ This public repository shares the AIDT reusable operating-system prototype and i
 - `coding/` - The 45 Markdown documents referenced by the development-standards catalog, covering project context, engineering standards, templates, and AI prompt playbooks.
 - `AIDT-AI开发规范目录说明.xlsx` - The catalog and reading guide for the 45 Markdown documents.
 
+Complete formal-system source is published separately at [ai-bp-team-aidt-platform](https://github.com/zzzxy12321/ai-bp-team-aidt-platform).
+
 ## Suggested reading order
 
 1. Read `coding/AGENTS.md` and `coding/README.md`.
